@@ -1,0 +1,15 @@
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins-dependencies
+
+# Node
+server/node_modules/
+server/.env
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+

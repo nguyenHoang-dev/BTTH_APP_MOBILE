@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🟩 Node.js AI Server (nodemon)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "🌐 Flutter – Web (Chrome)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/mobile",
+      "program": "lib/main.dart",
+      "deviceId": "chrome"
+    },
+    {
+      "name": "📱 Flutter – Emulator (10.0.2.2)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/mobile",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "📱 Flutter – Thiết bị thật (sửa IP LAN)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/mobile",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define=API_BASE_URL=http://192.168.1.10:3000"]
+    },
+    {
+      "name": "🧪 Flutter – Demo Mode (offline)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/mobile",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define=DEMO_MODE=true"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Full stack: Server + Web (Chrome)",
+      "configurations": ["🟩 Node.js AI Server (nodemon)", "🌐 Flutter – Web (Chrome)"],
+      "stopAll": true
+    },
+    {
+      "name": "🚀 Full stack: Server + Emulator",
+      "configurations": ["🟩 Node.js AI Server (nodemon)", "📱 Flutter – Emulator (10.0.2.2)"],
+      "stopAll": true
+    }
+  ]
+}
