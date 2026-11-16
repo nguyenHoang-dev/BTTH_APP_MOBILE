@@ -24,9 +24,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        ndk {
-            abiFilters += listOf("x86_64")
-        }
     }
 
     signingConfigs {
@@ -36,14 +33,23 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Debug chỉ đóng gói x86_64 cho máy ảo + arm64-v8a cho điện thoại thật (bỏ armeabi-v7a 32-bit cũ).
+            ndk {
+                abiFilters += listOf("x86_64", "arm64-v8a")
+            }
+        }
         release {
             signingConfig = signingConfigs.getByName("debug")
+            ndk {
+                abiFilters += listOf("arm64-v8a", "x86_64")
+            }
         }
     }
 
     packaging {
         jniLibs {
-            excludes += listOf("**/armeabi-v7a/**", "**/arm64-v8a/**")
+            excludes += listOf("**/armeabi-v7a/**")
         }
     }
 }
@@ -154,7 +160,6 @@ tasks.configureEach {
             val inDir = File(buildDir, "intermediates/merged_native_libs/$variant/merge${cap}NativeLibs/out")
             val outDir = File(buildDir, "intermediates/stripped_native_libs/$variant/strip${cap}DebugSymbols/out")
             if (inDir.exists()) {
-                File(inDir, "lib/arm64-v8a").deleteRecursively()
                 File(inDir, "lib/armeabi-v7a").deleteRecursively()
                 inDir.walkTopDown().filter { it.isFile && it.extension == "so" }.forEach { stripElf64(it) }
                 outDir.deleteRecursively()

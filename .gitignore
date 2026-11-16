@@ -1,15 +1,22 @@
 # Flutter / Dart
 mobile/.dart_tool/
 mobile/build/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/.gradle/
 mobile/.flutter-plugins-dependencies
 
 # Node
 server/node_modules/
 server/.env
+server/.env.*
+!server/.env.example
 
 # IDE / OS
 .idea/
+mobile/.idea/
 *.iml
 .DS_Store
 Thumbs.db
+*.log
 

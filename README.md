@@ -109,11 +109,11 @@ npm run dev
 ```powershell
 cd mobile
 
-# 1. Bật máy ảo Android (chờ ~20 giây cho máy ảo lên màn hình chính)
+# 1. Bật máy ảo Android (chạy ngầm – mất khoảng 15–25 giây để Android khởi động xong)
 flutter emulators --launch pixel_avd
 
-# 2. Chạy ứng dụng lên máy ảo
-flutter run -d emulator-5554
+# 2. Chờ đến khi máy ảo hiện màn hình chính (hoặc gõ `flutter devices` thấy `emulator-5554`), rồi chạy:
+flutter run -d emulator-5554 --device-timeout 60
 ```
 
 #### Cách B: Chạy nhanh trên Trình duyệt Web (Chrome)

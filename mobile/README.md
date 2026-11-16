@@ -13,8 +13,9 @@
 # Cài đặt dependencies
 flutter pub get
 
-# Chạy trên máy ảo Android (sau khi bật: flutter emulators --launch pixel_avd)
-flutter run -d emulator-5554
+# Chạy trên máy ảo Android (bật máy ảo, đợi ~20s lên màn hình chính rồi chạy lệnh 2)
+flutter emulators --launch pixel_avd
+flutter run -d emulator-5554 --device-timeout 60
 
 # Chạy trên trình duyệt Chrome
 flutter run -d chrome
