@@ -20,3 +20,6 @@ mobile/.idea/
 Thumbs.db
 *.log
 
+# Scratch / temp
+brain/
+

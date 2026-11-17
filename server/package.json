@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "validate": "node scripts/validate_questions.js",
+    "test:backend": "node test_suite.js"
   },
   "engines": {
     "node": ">=18"

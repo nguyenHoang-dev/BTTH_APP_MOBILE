@@ -2,6 +2,8 @@ const geminiService = require('../services/gemini.service');
 const { HttpError } = require('../middlewares/error.middleware');
 
 const MAX_TEXT = 1000;
+const VALID_LANGUAGES = ['vi', 'en'];
+const VALID_CATEGORIES = ['grammar', 'vocabulary', 'flutter', 'network', 'dart'];
 
 function requireString(body, field) {
   const value = body[field];
@@ -17,24 +19,27 @@ function requireString(body, field) {
 /**
  * Body mong đợi:
  * {
- *   "question": "string",
- *   "options": ["A", "B", "C", "D"],
+ *   "question":       "string",
+ *   "options":        ["A", "B", "C", "D"],
  *   "selectedAnswer": "string",
- *   "correctAnswer": "string",
- *   "language": "vi" | "en"
+ *   "correctAnswer":  "string",
+ *   "language":       "vi" | "en"          (mặc định "vi")
+ *   "category":       "grammar" | "vocabulary" | "flutter" | "network" | "dart"  (optional)
  * }
  */
 async function explainAnswer(req, res, next) {
   try {
     const body = req.body || {};
     const payload = {
-      question: requireString(body, 'question'),
+      question:       requireString(body, 'question'),
       selectedAnswer: requireString(body, 'selectedAnswer'),
-      correctAnswer: requireString(body, 'correctAnswer'),
+      correctAnswer:  requireString(body, 'correctAnswer'),
       options: Array.isArray(body.options)
         ? body.options.filter((o) => typeof o === 'string').slice(0, 6)
         : [],
-      language: body.language === 'en' ? 'en' : 'vi',
+      language: VALID_LANGUAGES.includes(body.language) ? body.language : 'vi',
+      // category là optional – dùng cho mock thông minh hơn theo chủ đề
+      category: VALID_CATEGORIES.includes(body.category) ? body.category : undefined,
     };
 
     const result = await geminiService.explain(payload);
