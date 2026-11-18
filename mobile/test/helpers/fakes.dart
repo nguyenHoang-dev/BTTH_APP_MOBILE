@@ -31,6 +31,23 @@ class FakeQuizRepository implements QuizRepository {
     if (error != null) throw error!;
     return questions;
   }
+
+  @override
+  Future<List<String>> getCategories() async {
+    if (error != null) throw error!;
+    return questions.map((q) => q.category).toSet().toList(growable: false);
+  }
+
+  @override
+  Future<List<Question>> loadQuestionsByCategory(String? category) async {
+    if (error != null) throw error!;
+    if (category == null || category.isEmpty || category.toLowerCase() == 'all') {
+      return questions;
+    }
+    return questions
+        .where((q) => q.category.toLowerCase() == category.toLowerCase())
+        .toList(growable: false);
+  }
 }
 
 /// Fake HistoryRepository – lưu trong RAM thay vì SQLite.

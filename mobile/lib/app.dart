@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/di/app_dependencies.dart';
 import 'providers/ai_provider.dart';
 import 'providers/history_provider.dart';
+import 'providers/practice_provider.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
@@ -24,6 +25,9 @@ class BilingualQuizApp extends StatelessWidget {
             quizRepository: d.quizRepository,
             historyRepository: d.historyRepository,
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PracticeProvider(quizRepository: d.quizRepository),
         ),
         ChangeNotifierProvider(
           create: (_) => HistoryProvider(historyRepository: d.historyRepository),

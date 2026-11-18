@@ -11,6 +11,12 @@ import '../models/question.dart';
 abstract interface class QuizRepository {
   /// Toàn bộ ngân hàng câu hỏi (~300 câu).
   Future<List<Question>> loadAllQuestions();
+
+  /// Danh sách các khối kiến thức (category) có trong ngân hàng.
+  Future<List<String>> getCategories();
+
+  /// Lọc câu hỏi theo category (truyền null hoặc 'all' để lấy tất cả).
+  Future<List<Question>> loadQuestionsByCategory(String? category);
 }
 
 /// Đọc câu hỏi từ file JSON cục bộ trong assets (chạy offline 100%).
@@ -47,6 +53,29 @@ class AssetQuizRepository implements QuizRepository {
     } catch (e) {
       throw AppException('Không đọc được ngân hàng câu hỏi.', cause: e);
     }
+  }
+
+  @override
+  Future<List<String>> getCategories() async {
+    final questions = await loadAllQuestions();
+    final categories = <String>{};
+    for (final q in questions) {
+      if (q.category.isNotEmpty) {
+        categories.add(q.category);
+      }
+    }
+    return categories.toList(growable: false);
+  }
+
+  @override
+  Future<List<Question>> loadQuestionsByCategory(String? category) async {
+    final questions = await loadAllQuestions();
+    if (category == null || category.isEmpty || category.toLowerCase() == 'all') {
+      return questions;
+    }
+    return questions
+        .where((q) => q.category.toLowerCase() == category.toLowerCase())
+        .toList(growable: false);
   }
 }
 

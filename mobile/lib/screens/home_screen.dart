@@ -7,6 +7,7 @@ import '../models/localized_text.dart';
 import '../models/quiz_result.dart';
 import '../providers/history_provider.dart';
 import '../providers/settings_provider.dart';
+import 'practice_screen.dart';
 import 'quiz_screen.dart';
 import 'widgets/state_views.dart';
 
@@ -34,6 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) context.read<HistoryProvider>().load(); // Làm mới thống kê.
   }
 
+  Future<void> _openPractice() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PracticeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
@@ -46,9 +53,20 @@ class _HomeScreenState extends State<HomeScreen> {
           _SettingsCard(settings: settings),
           const SizedBox(height: 16),
           FilledButton.icon(
+            key: const Key('home_practice_button'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.tertiary,
+              foregroundColor: Theme.of(context).colorScheme.onTertiary,
+            ),
+            onPressed: _openPractice,
+            icon: const Icon(Icons.school_outlined),
+            label: const Text('Luyện tập theo chủ đề (Xem đáp án tức thì)'),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
             onPressed: () => _openQuiz(),
             icon: const Icon(Icons.play_arrow),
-            label: Text('Làm bài ngẫu nhiên (${AppConfig.questionsPerQuiz} câu)'),
+            label: Text('Thi thử ngẫu nhiên (${AppConfig.questionsPerQuiz} câu)'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
