@@ -14,12 +14,21 @@ if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
   }
 }
 
+const PLACEHOLDER_KEYS = new Set([
+  'your_gemini_api_key_here',
+  'NHAP_KEY_GEMINI_CUA_BAN_VAO_DAY',
+]);
+
+function isRealApiKey(key) {
+  return Boolean(key) && !PLACEHOLDER_KEYS.has(key);
+}
+
 function readValidKey(filePath) {
   if (!fs.existsSync(filePath)) return '';
   try {
     const parsed = dotenv.parse(fs.readFileSync(filePath));
     const k = (parsed.GEMINI_API_KEY || '').trim();
-    return k && k !== 'your_gemini_api_key_here' ? k : '';
+    return isRealApiKey(k) ? k : '';
   } catch {
     return '';
   }
@@ -31,7 +40,7 @@ dotenv.config({ path: envExamplePath });
 // Cho phép dán key vào bất kỳ file nào (.env hoặc dán thẳng vào .env.example đều nhận được ngay!)
 const envKey = (process.env.GEMINI_API_KEY || '').trim();
 const resolvedKey =
-  (envKey && envKey !== 'your_gemini_api_key_here' ? envKey : '') ||
+  (isRealApiKey(envKey) ? envKey : '') ||
   readValidKey(envPath) ||
   readValidKey(envExamplePath);
 
