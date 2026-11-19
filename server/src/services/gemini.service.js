@@ -5,15 +5,25 @@ const { HttpError } = require('../middlewares/error.middleware');
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-/** Gemini đôi khi bọc JSON trong ```json ... ``` => bóc ra cho chắc. */
+/** Gemini đôi khi bọc JSON trong ```json ... ``` hoặc trả thiếu trường => chuẩn hóa về đủ 4 trường string. */
 function parseModelJson(text) {
-  const cleaned = text.replace(/```json|```/g, '').trim();
+  const cleaned = text.replace(/```json|```/gi, '').trim();
   try {
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        whyWrong: typeof parsed.whyWrong === 'string' ? parsed.whyWrong.trim() : '',
+        correctExplanation:
+          typeof parsed.correctExplanation === 'string' ? parsed.correctExplanation.trim() : '',
+        example: typeof parsed.example === 'string' ? parsed.example.trim() : '',
+        tip: typeof parsed.tip === 'string' ? parsed.tip.trim() : '',
+      };
+    }
   } catch {
-    // Không parse được -> trả nguyên văn vào whyWrong để app vẫn hiển thị được.
-    return { whyWrong: cleaned, correctExplanation: '', example: '', tip: '' };
+    // Bỏ qua lỗi parse để fallback xuống dưới.
   }
+  // Không parse được -> trả nguyên văn vào whyWrong để app vẫn hiển thị được.
+  return { whyWrong: cleaned, correctExplanation: '', example: '', tip: '' };
 }
 
 async function callGemini(prompt) {

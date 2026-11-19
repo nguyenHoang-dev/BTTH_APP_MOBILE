@@ -32,7 +32,10 @@ async function explainAnswer(req, res, next) {
       selectedAnswer: requireString(body, 'selectedAnswer'),
       correctAnswer: requireString(body, 'correctAnswer'),
       options: Array.isArray(body.options)
-        ? body.options.filter((o) => typeof o === 'string').slice(0, 6)
+        ? body.options
+            .filter((o) => typeof o === 'string' && o.trim().length > 0)
+            .slice(0, 6)
+            .map((o) => o.trim().slice(0, MAX_TEXT))
         : [],
       language: body.language === 'en' ? 'en' : 'vi',
     };

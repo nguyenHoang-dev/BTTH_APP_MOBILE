@@ -1,14 +1,16 @@
+const env = require('../config/env');
 const { HttpError } = require('./error.middleware');
 
 /**
- * Bộ giới hạn lượt gọi (Fixed/Sliding Window Rate Limiter) theo IP.
+ * Bộ giới hạn lượt gọi (Fixed Window Rate Limiter) theo IP.
  *
  * Bảo vệ hạn mức GEMINI_API_KEY trước các kịch bản spam request hoặc vòng lặp lỗi từ client.
  * Mặc định: tối đa 15 lượt gọi / 60 giây trên mỗi địa chỉ IP.
  */
 function createRateLimiter({
-  windowMs = 60 * 1000,
-  maxRequests = 15,
+  windowMs = env.rateLimitWindowMs,
+  maxRequests = env.rateLimitMaxRequests,
+  maxTrackedIps = 5000,
 } = {}) {
   /** @type {Map<string, { count: number, resetAt: number }>} */
   const buckets = new Map();
@@ -29,17 +31,18 @@ function createRateLimiter({
   }
 
   function rateLimitMiddleware(req, res, next) {
-    const forwarded = req.headers['x-forwarded-for'];
-    const clientIp =
-      (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : null) ||
-      req.ip ||
-      req.socket?.remoteAddress ||
-      'unknown';
+    // Sử dụng req.ip chuẩn của Express (chống giả mạo header X-Forwarded-For khi không qua reverse proxy).
+    const clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
 
     const now = Date.now();
     let record = buckets.get(clientIp);
 
     if (!record || now >= record.resetAt) {
+      // Bảo vệ RAM nếu bị flood từ hàng ngàn IP khác nhau.
+      if (buckets.size >= maxTrackedIps && !buckets.has(clientIp)) {
+        const oldestKey = buckets.keys().next().value;
+        if (oldestKey !== undefined) buckets.delete(oldestKey);
+      }
       record = { count: 0, resetAt: now + windowMs };
       buckets.set(clientIp, record);
     }
@@ -72,9 +75,7 @@ function createRateLimiter({
   return rateLimitMiddleware;
 }
 
-const aiRateLimiter = createRateLimiter({
-  windowMs: 60 * 1000,
-  maxRequests: 15,
-});
+const aiRateLimiter = createRateLimiter();
 
 module.exports = { createRateLimiter, aiRateLimiter };
+
