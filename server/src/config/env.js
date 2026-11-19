@@ -1,12 +1,43 @@
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
 
-const rawKey = (process.env.GEMINI_API_KEY || '').trim();
-// Nếu người dùng copy nguyên file .env.example mà chưa thay key thật thì coi như chưa có key.
-const isPlaceholderKey = rawKey === 'your_gemini_api_key_here';
+const envPath = path.resolve(__dirname, '../../.env');
+const envExamplePath = path.resolve(__dirname, '../../.env.example');
+
+// Tự động tạo sẵn file .env từ .env.example nếu máy của thành viên mới pull về chưa có file .env.
+if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+  try {
+    fs.copyFileSync(envExamplePath, envPath);
+  } catch {
+    // Bỏ qua nếu không có quyền ghi file
+  }
+}
+
+function readValidKey(filePath) {
+  if (!fs.existsSync(filePath)) return '';
+  try {
+    const parsed = dotenv.parse(fs.readFileSync(filePath));
+    const k = (parsed.GEMINI_API_KEY || '').trim();
+    return k && k !== 'your_gemini_api_key_here' ? k : '';
+  } catch {
+    return '';
+  }
+}
+
+dotenv.config({ path: envPath });
+dotenv.config({ path: envExamplePath });
+
+// Cho phép dán key vào bất kỳ file nào (.env hoặc dán thẳng vào .env.example đều nhận được ngay!)
+const envKey = (process.env.GEMINI_API_KEY || '').trim();
+const resolvedKey =
+  (envKey && envKey !== 'your_gemini_api_key_here' ? envKey : '') ||
+  readValidKey(envPath) ||
+  readValidKey(envExamplePath);
 
 const env = {
   port: Number(process.env.PORT) || 3000,
-  geminiApiKey: isPlaceholderKey ? '' : rawKey,
+  geminiApiKey: resolvedKey,
   geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   geminiTimeoutMs: Number(process.env.GEMINI_TIMEOUT_MS) || 12000,
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 1000,

@@ -13,7 +13,7 @@
     "node": ">=18"
   },
   "nodemonConfig": {
-    "watch": ["src", ".env"],
+    "watch": ["src", ".env", ".env.example"],
     "ext": "js,json"
   },
   "dependencies": {
