@@ -4,11 +4,6 @@ Thư mục này lưu **lịch sử prompt** dùng trong quá trình phát triể
 
 ## Quy ước
 
-> [!IMPORTANT]
-> **Luật bắt buộc khi thành viên dùng AI hỗ trợ:**
-> - Yêu cầu AI (và chính thành viên): **Nếu yêu cầu hoặc ngữ cảnh (context) chưa rõ ràng thì phải hỏi lại ngay, tuyệt đối không đoán mò sinh code bừa.**
-> - Thành viên phải đọc hiểu 100% đoạn code AI sinh ra; chỗ nào chưa hiểu phải hỏi lại cho tới khi nắm rõ mới được đưa vào dự án.
-
 - Mỗi phiên làm việc với AI = 1 file: `YYYY-MM-DD_NN_<chu-de>.md` (vd. `2026-11-16_01_scaffold.md`).
 - Dùng mẫu [`_TEMPLATE.md`](./_TEMPLATE.md).
 - Ghi rõ: công cụ AI, prompt gốc, tóm tắt kết quả, **phần nào sinh viên đã sửa/kiểm chứng**.
@@ -19,4 +14,6 @@ Thư mục này lưu **lịch sử prompt** dùng trong quá trình phát triể
 | # | Ngày | Chủ đề | File |
 |---|---|---|---|
 | 01 | 2026-11-16 | Khởi tạo kiến trúc & bộ khung dự án | [2026-11-16_01_scaffold.md](./2026-11-16_01_scaffold.md) |
+| 02 | 2026-11-17 | Thiết kế dữ liệu Offline: Ngân hàng câu hỏi JSON & SQLite | [2026-11-17_02_bilingual_bank_and_sqlite.md](./2026-11-17_02_bilingual_bank_and_sqlite.md) |
+| 03 | 2026-11-19 | Bảo mật Backend Node.js (Rate Limiting) & Nâng cấp AI Dialog | [2026-11-19_03_ai_backend_rate_limit_and_dialog.md](./2026-11-19_03_ai_backend_rate_limit_and_dialog.md) |
 
