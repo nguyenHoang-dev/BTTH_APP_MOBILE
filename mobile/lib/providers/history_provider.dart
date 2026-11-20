@@ -15,6 +15,19 @@ class HistoryProvider extends ChangeNotifier {
   ViewState<List<QuizResult>> _state = const IdleState();
   ViewState<List<QuizResult>> get state => _state;
 
+  List<CategoryStat> _categoryStats = const [];
+
+  /// Tỷ lệ đúng theo từng khối kiến thức (hiển thị bằng LinearProgressIndicator).
+  List<CategoryStat> get categoryStats => _categoryStats;
+
+  int _wrongCount = 0;
+
+  /// Số câu còn nằm trong danh sách "câu sai" (chưa làm đúng lại).
+  int get wrongCount => _wrongCount;
+
+  bool _clearing = false;
+  bool get isClearing => _clearing;
+
   int get totalAttempts => _state.dataOrNull?.length ?? 0;
 
   double get averageScore {
@@ -34,6 +47,8 @@ class HistoryProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final results = await _repo.getResults();
+      _categoryStats = await _repo.getCategoryStats();
+      _wrongCount = (await _repo.getWrongQuestionIds()).length;
       _state = results.isEmpty
           ? const EmptyState('Chưa có lịch sử. Hãy làm bài đầu tiên nhé!')
           : SuccessState(results);
@@ -44,5 +59,24 @@ class HistoryProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
-}
 
+  /// Xóa toàn bộ lịch sử (UI phải hỏi xác nhận bằng AlertDialog TRƯỚC khi gọi).
+  /// Trả về thông báo lỗi nếu thất bại, `null` nếu thành công.
+  Future<String?> clearHistory() async {
+    if (_clearing) return null;
+    _clearing = true;
+    notifyListeners();
+    String? error;
+    try {
+      await _repo.clearHistory();
+    } on AppException catch (e) {
+      error = e.message;
+    } catch (_) {
+      error = 'Không xóa được lịch sử làm bài.';
+    } finally {
+      _clearing = false;
+    }
+    await load(); // load() tự gọi notifyListeners().
+    return error;
+  }
+}

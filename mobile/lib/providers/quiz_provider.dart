@@ -36,6 +36,9 @@ class QuizProvider extends ChangeNotifier {
   bool _submitting = false;
   String? _saveWarning;
 
+  /// true khi đang ở chế độ "Ôn lại câu sai" (TV4: để xóa câu đã làm đúng lại).
+  bool _onlyWrong = false;
+
   ViewState<List<Question>> get state => _state;
   List<Question> get questions => _state.dataOrNull ?? const [];
   int get currentIndex => _currentIndex;
@@ -55,6 +58,7 @@ class QuizProvider extends ChangeNotifier {
   Future<void> startQuiz({bool onlyWrong = false}) async {
     _state = const LoadingState();
     _resetProgress();
+    _onlyWrong = onlyWrong;
     notifyListeners();
 
     try {
@@ -117,6 +121,16 @@ class QuizProvider extends ChangeNotifier {
 
     try {
       await _historyRepo.saveResult(result);
+      // Ôn lại câu sai: câu nào làm ĐÚNG lại thì xóa khỏi bảng wrong_answers.
+      if (_onlyWrong) {
+        final fixedIds = result.answers
+            .where((a) => a.isCorrect)
+            .map((a) => a.question.id)
+            .toSet();
+        if (fixedIds.isNotEmpty) {
+          await _historyRepo.removeWrongAnswers(fixedIds);
+        }
+      }
     } on AppException catch (e) {
       _saveWarning = e.message;
     } catch (_) {

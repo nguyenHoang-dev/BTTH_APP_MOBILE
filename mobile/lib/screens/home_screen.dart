@@ -34,12 +34,60 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) context.read<HistoryProvider>().load(); // Làm mới thống kê.
   }
 
+  /// Hỏi xác nhận bằng AlertDialog rồi mới xóa (an toàn dữ liệu).
+  Future<void> _confirmClearHistory() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa lịch sử?'),
+        content: const Text(
+          'Toàn bộ lịch sử điểm, danh sách câu sai và thống kê theo khối '
+          'sẽ bị xóa vĩnh viễn. Không thể hoàn tác.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            key: const Key('confirm_clear_history'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    final error = await context.read<HistoryProvider>().clearHistory();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error ?? 'Đã xóa lịch sử làm bài.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final history = context.watch<HistoryProvider>();
+    final canClear = !history.isClearing &&
+        (history.totalAttempts > 0 || history.categoryStats.isNotEmpty);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ôn tập song ngữ')),
+      appBar: AppBar(
+        title: const Text('Ôn tập song ngữ'),
+        actions: [
+          IconButton(
+            key: const Key('clear_history_button'),
+            tooltip: 'Xóa lịch sử',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: canClear ? _confirmClearHistory : null,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -54,9 +102,16 @@ class _HomeScreenState extends State<HomeScreen> {
           OutlinedButton.icon(
             onPressed: () => _openQuiz(onlyWrong: true),
             icon: const Icon(Icons.replay),
-            label: const Text('Ôn lại các câu đã làm sai'),
+            label: Text('Ôn lại các câu đã làm sai (${history.wrongCount})'),
           ),
           const SizedBox(height: 24),
+          if (history.categoryStats.isNotEmpty) ...[
+            Text('Tỷ lệ đúng theo khối kiến thức',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            _CategoryStatsCard(stats: history.categoryStats),
+            const SizedBox(height: 24),
+          ],
           Text('Thống kê', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           const SizedBox(height: 320, child: _HistorySection()),
@@ -94,6 +149,48 @@ class _SettingsCard extends StatelessWidget {
               selected: {settings.language},
               onSelectionChanged: (s) => settings.setLanguage(s.first),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Mỗi khối kiến thức 1 dòng: tên khối, đúng/tổng (%), thanh tiến độ.
+class _CategoryStatsCard extends StatelessWidget {
+  const _CategoryStatsCard({required this.stats});
+  final List<CategoryStat> stats;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            for (final s in stats)
+              Padding(
+                key: Key('category_stat_${s.category}'),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(s.category)),
+                        Text('${s.correct}/${s.total} '
+                            '(${(s.accuracy * 100).toStringAsFixed(0)}%)'),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: s.accuracy,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
