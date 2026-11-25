@@ -3,7 +3,6 @@ const cors = require('cors');
 const explainRoutes = require('./routes/explain.routes');
 const env = require('./config/env');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
-const { explainRateLimiter } = require('./middlewares/rate_limit.middleware');
 
 const app = express();
 
@@ -15,7 +14,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Rate limit: 20 req/phút/IP – đủ cho Practice Mode thực tế, chặn spam.
-app.use('/api/explain', explainRateLimiter, explainRoutes);
+app.use('/api/explain', explainRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

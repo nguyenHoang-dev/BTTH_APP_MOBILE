@@ -1,69 +1,85 @@
-/**
- * rate_limit.middleware.js
- *
- * Giới hạn số request đến /api/explain để tránh spam,
- * đặc biệt khi Practice Mode gọi AI sau mỗi câu.
- *
- * Không dùng package ngoài – tự implement in-memory sliding window.
- * Phù hợp cho môi trường single-process (Node.js / Express đơn lẻ).
- */
-
-const DEFAULT_WINDOW_MS = 60 * 1000; // 1 phút
-const DEFAULT_MAX_REQUESTS = 20;     // 20 request / phút / IP
-
-/** Map<ip, { count, resetAt }> */
-const store = new Map();
+const env = require('../config/env');
+const { HttpError } = require('./error.middleware');
 
 /**
- * Tạo middleware rate limit.
- * @param {{ windowMs?: number, max?: number }} options
+ * Bộ giới hạn lượt gọi (Fixed Window Rate Limiter) theo IP.
+ *
+ * Bảo vệ hạn mức GEMINI_API_KEY trước các kịch bản spam request hoặc vòng lặp lỗi từ client.
+ * Mặc định: tối đa 15 lượt gọi / 60 giây trên mỗi địa chỉ IP.
  */
-function createRateLimiter({ windowMs = DEFAULT_WINDOW_MS, max = DEFAULT_MAX_REQUESTS } = {}) {
-  // Dọn dẹp các entry cũ mỗi windowMs để tránh memory leak.
-  const cleanup = setInterval(() => {
+function createRateLimiter({
+  windowMs = env.rateLimitWindowMs,
+  maxRequests = env.rateLimitMaxRequests,
+  maxTrackedIps = 5000,
+} = {}) {
+  /** @type {Map<string, { count: number, resetAt: number }>} */
+  const buckets = new Map();
+
+  // Dọn dẹp định kỳ các IP đã hết hạn để tránh rò rỉ bộ nhớ (memory leak) khi chạy lâu dài.
+  const cleanupTimer = setInterval(() => {
     const now = Date.now();
-    for (const [key, record] of store.entries()) {
-      if (record.resetAt <= now) store.delete(key);
+    for (const [ip, record] of buckets.entries()) {
+      if (now >= record.resetAt) {
+        buckets.delete(ip);
+      }
     }
   }, windowMs);
 
-  // Cho phép Node.js thoát dù interval còn sống.
-  if (cleanup.unref) cleanup.unref();
+  // Không giữ event loop của Node.js khi đóng server hoặc chạy test.
+  if (typeof cleanupTimer.unref === 'function') {
+    cleanupTimer.unref();
+  }
 
-  return function rateLimitMiddleware(req, res, next) {
-    // Lấy IP: hỗ trợ proxy/load-balancer qua X-Forwarded-For.
-    const ip =
-      (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-      req.socket?.remoteAddress ||
-      'unknown';
+  function rateLimitMiddleware(req, res, next) {
+    // Sử dụng req.ip chuẩn của Express (chống giả mạo header X-Forwarded-For khi không qua reverse proxy).
+    const clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
 
     const now = Date.now();
-    let record = store.get(ip);
+    let record = buckets.get(clientIp);
 
-    if (!record || record.resetAt <= now) {
-      record = { count: 1, resetAt: now + windowMs };
-      store.set(ip, record);
-      return next();
+    if (!record || now >= record.resetAt) {
+      // Bảo vệ RAM nếu bị flood từ hàng ngàn IP khác nhau.
+      if (buckets.size >= maxTrackedIps && !buckets.has(clientIp)) {
+        const oldestKey = buckets.keys().next().value;
+        if (oldestKey !== undefined) buckets.delete(oldestKey);
+      }
+      record = { count: 0, resetAt: now + windowMs };
+      buckets.set(clientIp, record);
     }
 
     record.count += 1;
 
-    if (record.count > max) {
-      const retryAfterSec = Math.ceil((record.resetAt - now) / 1000);
-      res.setHeader('Retry-After', retryAfterSec);
-      return res.status(429).json({
-        error: {
-          message: `Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ${retryAfterSec} giây.`,
-        },
-      });
+    const remaining = Math.max(0, maxRequests - record.count);
+    const retryAfterSec = Math.max(1, Math.ceil((record.resetAt - now) / 1000));
+
+    res.setHeader('X-RateLimit-Limit', String(maxRequests));
+    res.setHeader('X-RateLimit-Remaining', String(remaining));
+    res.setHeader('X-RateLimit-Reset', String(Math.ceil(record.resetAt / 1000)));
+
+    if (record.count > maxRequests) {
+      res.setHeader('Retry-After', String(retryAfterSec));
+      return next(
+        new HttpError(
+          429,
+          `Bạn đã gọi AI quá nhiều lần (tối đa ${maxRequests} lần/phút). Vui lòng thử lại sau ${retryAfterSec} giây.`,
+        ),
+      );
     }
 
     return next();
-  };
+  }
+
+  // Cho phép xóa bộ nhớ trong unit test khi cần.
+  rateLimitMiddleware.reset = () => buckets.clear();
+
+  return rateLimitMiddleware;
 }
 
-/** Middleware mặc định: 20 req / phút / IP – dùng ngay cho route explain. */
-const explainRateLimiter = createRateLimiter();
+const aiRateLimiter = createRateLimiter();
 
-module.exports = { createRateLimiter, explainRateLimiter };
+module.exports = {
+  createRateLimiter,
+  aiRateLimiter,
+  explainRateLimiter: aiRateLimiter,
+};
 
