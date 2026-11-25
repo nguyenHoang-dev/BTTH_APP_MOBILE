@@ -68,5 +68,26 @@ class FakeHistoryRepository implements HistoryRepository {
 
   @override
   Future<Set<int>> getWrongQuestionIds() async => wrongIds;
+
+  List<CategoryStat> categoryStats = [];
+  bool failOnClear = false;
+  int clearCalls = 0;
+
+  @override
+  Future<List<CategoryStat>> getCategoryStats() async => categoryStats;
+
+  @override
+  Future<void> removeWrongAnswers(Set<int> questionIds) async {
+    wrongIds.removeAll(questionIds);
+  }
+
+  @override
+  Future<void> clearHistory() async {
+    clearCalls++;
+    if (failOnClear) throw const AppException('Không xóa được lịch sử làm bài.');
+    saved.clear();
+    wrongIds.clear();
+    categoryStats = [];
+  }
 }
 

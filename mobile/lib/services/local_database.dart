@@ -7,10 +7,13 @@ class LocalDatabase {
   LocalDatabase({this.fileName = 'bilingual_quiz.db'});
 
   final String fileName;
-  static const int _version = 1;
+  /// v1: quiz_results, wrong_answers.
+  /// v2: thêm bảng category_stats (thống kê đúng/tổng theo khối kiến thức).
+  static const int _version = 2;
 
   static const String tableResults = 'quiz_results';
   static const String tableWrongAnswers = 'wrong_answers';
+  static const String tableCategoryStats = 'category_stats';
 
   Database? _db;
 
@@ -24,6 +27,7 @@ class LocalDatabase {
       version: _version,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
     return _db!;
   }
@@ -51,6 +55,25 @@ class LocalDatabase {
     await db.execute(
       'CREATE INDEX idx_wrong_question ON $tableWrongAnswers(question_id)',
     );
+    await _createCategoryStats(db);
+  }
+
+  /// Máy đã cài bản v1: chỉ tạo thêm bảng mới, KHÔNG xóa dữ liệu cũ.
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await _createCategoryStats(db);
+    }
+  }
+
+  /// Mỗi khối kiến thức 1 dòng; cộng dồn sau mỗi lượt làm bài.
+  Future<void> _createCategoryStats(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableCategoryStats (
+        category      TEXT    PRIMARY KEY,
+        correct_count INTEGER NOT NULL DEFAULT 0,
+        total_count   INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
   }
 
   Future<void> close() async => _db?.close();

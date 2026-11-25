@@ -27,10 +27,12 @@ class QuizEngine {
   }) {
     var correct = 0;
     final wrong = <UserAnswer>[];
+    final all = <UserAnswer>[]; // TV4: dùng cho thống kê theo khối & xóa câu sai.
 
     for (var i = 0; i < questions.length; i++) {
       final selected = answers[i] ?? unanswered;
       final answer = UserAnswer(question: questions[i], selectedIndex: selected);
+      all.add(answer);
       if (answer.isCorrect) {
         correct++;
       } else {
@@ -44,6 +46,7 @@ class QuizEngine {
       duration: duration,
       takenAt: takenAt,
       wrongAnswers: List.unmodifiable(wrong),
+      answers: List.unmodifiable(all),
     );
   }
 }
