@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../models/localized_text.dart';
 import '../models/quiz_result.dart';
 import '../providers/settings_provider.dart';
-import 'ai_explanation_dialog.dart';
 import 'widgets/state_views.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -18,7 +17,7 @@ class ResultScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả')),
+      appBar: AppBar(title: const Text('Kết quả bài thi')),
       body: Column(
         children: [
           Padding(
@@ -53,17 +52,11 @@ class ResultScreen extends StatelessWidget {
                             children: [
                               Text(q.content.resolve(lang), style: theme.textTheme.titleSmall),
                               const SizedBox(height: 6),
-                              Text('✗ Bạn chọn: $chosen', style: TextStyle(color: theme.colorScheme.error)),
-                              Text('✓ Đáp án: ${q.correctOption.resolve(lang)}',
-                                  style: const TextStyle(color: Colors.green)),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  icon: const Icon(Icons.auto_awesome),
-                                  label: const Text('Hỏi AI tại sao sai'),
-                                  onPressed: () => AIExplanationDialog.show(context, w),
-                                ),
-                              ),
+                              Text('✗ Bạn chọn (Sai): $chosen',
+                                  style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text('✓ Đáp án đúng: ${q.correctOption.resolve(lang)}',
+                                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),

@@ -8,7 +8,6 @@ class Question {
     required this.content,
     required this.options,
     required this.correctIndex,
-    this.explanation,
   });
 
   final int id;
@@ -16,9 +15,6 @@ class Question {
   final LocalizedText content;
   final List<LocalizedText> options;
   final int correctIndex;
-
-  /// Giải thích tĩnh có sẵn trong ngân hàng câu hỏi (offline).
-  final LocalizedText? explanation;
 
   bool isCorrect(int selectedIndex) => selectedIndex == correctIndex;
 
@@ -38,9 +34,6 @@ class Question {
       content: LocalizedText.fromJson(json['question'] as Map<String, dynamic>),
       options: options,
       correctIndex: correctIndex,
-      explanation: json['explanation'] == null
-          ? null
-          : LocalizedText.fromJson(json['explanation'] as Map<String, dynamic>),
     );
   }
 
@@ -50,7 +43,6 @@ class Question {
         'question': content.toJson(),
         'options': options.map((e) => e.toJson()).toList(),
         'correctIndex': correctIndex,
-        if (explanation != null) 'explanation': explanation!.toJson(),
       };
 }
 

@@ -12,7 +12,7 @@ import 'helpers/fakes.dart';
 Widget _buildTestApp(FakeQuizRepository quizRepo) {
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (_) => SettingsProvider(demoMode: true)),
+      ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ChangeNotifierProvider(
         create: (_) => QuizProvider(
           quizRepository: quizRepo,

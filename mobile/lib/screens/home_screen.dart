@@ -96,13 +96,7 @@ class _SettingsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Chế độ Demo AI'),
-              subtitle: const Text('Dùng dữ liệu giả lập, không cần mạng/API key'),
-              value: settings.demoMode,
-              onChanged: settings.setDemoMode,
-            ),
+            Text('Ngôn ngữ hiển thị • Language', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             SegmentedButton<AppLanguage>(
               segments: [

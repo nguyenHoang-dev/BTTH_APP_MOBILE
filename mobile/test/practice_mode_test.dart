@@ -17,7 +17,7 @@ Widget _buildPracticeTestApp({
 }) {
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (_) => settings ?? SettingsProvider(demoMode: true)),
+      ChangeNotifierProvider(create: (_) => settings ?? SettingsProvider()),
       ChangeNotifierProvider(create: (_) => PracticeProvider(quizRepository: quizRepo)),
     ],
     child: const MaterialApp(home: PracticeScreen()),
@@ -41,7 +41,6 @@ void main() {
             LocalizedText(vi: 'D', en: 'D'),
           ],
           correctIndex: 1, // B là đáp án đúng
-          explanation: const LocalizedText(vi: 'Giải thích 1', en: 'Exp 1'),
         ),
         Question(
           id: 2,
@@ -54,7 +53,6 @@ void main() {
             LocalizedText(vi: 'D', en: 'D'),
           ],
           correctIndex: 0, // A là đáp án đúng
-          explanation: const LocalizedText(vi: 'Giải thích 2', en: 'Exp 2'),
         ),
         Question(
           id: 3,
@@ -67,7 +65,6 @@ void main() {
             LocalizedText(vi: 'D', en: 'D'),
           ],
           correctIndex: 2, // C là đáp án đúng
-          explanation: const LocalizedText(vi: 'Giải thích 3', en: 'Exp 3'),
         ),
       ];
     });
@@ -174,7 +171,6 @@ void main() {
             LocalizedText(vi: 'Lựa chọn D', en: 'Option D'),
           ],
           correctIndex: 1,
-          explanation: const LocalizedText(vi: 'B là đáp án chuẩn', en: 'B is correct'),
         ),
       ];
 
@@ -188,11 +184,11 @@ void main() {
       expect(find.byKey(const Key('practice_option_1')), findsOneWidget);
       expect(find.byKey(const Key('practice_option_2')), findsOneWidget);
       expect(find.byKey(const Key('practice_option_3')), findsOneWidget);
-      // Chưa chọn nên chưa có nút hỏi AI hay giải thích
-      expect(find.byKey(const Key('ask_ai_button')), findsNothing);
+      // Chưa chọn nên chưa có phần phản hồi kết quả
+      expect(find.byKey(const Key('practice_feedback_section')), findsNothing);
     });
 
-    testWidgets('Chọn đáp án: hiện Xanh/Đỏ, giải thích tĩnh và nút Hỏi AI', (tester) async {
+    testWidgets('Chọn đáp án: hiện Xanh/Đỏ và chỉ rõ đáp án đúng (không có giải thích hay AI)', (tester) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -210,7 +206,6 @@ void main() {
             LocalizedText(vi: 'Lựa chọn D', en: 'Option D'),
           ],
           correctIndex: 1,
-          explanation: const LocalizedText(vi: 'B là đáp án chuẩn', en: 'B is correct'),
         ),
       ];
 
@@ -223,16 +218,17 @@ void main() {
       await tester.tap(find.byKey(const Key('practice_option_0')));
       await tester.pumpAndSettle();
 
-      // Hiện icon cancel (đỏ) cho đáp án sai và check_circle (xanh) cho đáp án đúng
-      expect(find.byIcon(Icons.cancel), findsOneWidget);
+      // Hiện icon cancel (đỏ) cho đáp án sai (ở cả option và banner feedback) và check_circle (xanh) cho đáp án đúng
+      expect(find.byIcon(Icons.cancel), findsNWidgets(2));
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
 
-      // Hiển thị phần giải thích tĩnh
-      expect(find.byKey(const Key('practice_explanation_text')), findsOneWidget);
-      expect(find.text('B là đáp án chuẩn'), findsOneWidget);
-
-      // Hiển thị nút hỏi AI
-      expect(find.byKey(const Key('ask_ai_button')), findsOneWidget);
+      // Hiển thị phần kết quả (chỉ báo Đúng/Sai và đáp án đúng, tuyệt đối không có giải thích text hay nút AI)
+      expect(find.byKey(const Key('practice_feedback_section')), findsOneWidget);
+      expect(find.text('Chưa chính xác! (Sai)'), findsOneWidget);
+      expect(find.textContaining('Lựa chọn B'), findsOneWidget);
+      expect(find.byKey(const Key('retry_button')), findsOneWidget);
+      expect(find.byKey(const Key('ask_ai_button')), findsNothing);
+      expect(find.byKey(const Key('practice_explanation_text')), findsNothing);
     });
 
     testWidgets('Đổi ngôn ngữ trên giao diện theo SettingsProvider', (tester) async {

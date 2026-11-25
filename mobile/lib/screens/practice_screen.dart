@@ -4,10 +4,8 @@ import 'package:provider/provider.dart';
 import '../core/state/view_state.dart';
 import '../models/localized_text.dart';
 import '../models/question.dart';
-import '../models/quiz_result.dart';
 import '../providers/practice_provider.dart';
 import '../providers/settings_provider.dart';
-import 'ai_explanation_dialog.dart';
 import 'widgets/state_views.dart';
 
 /// Màn hình Chế độ Luyện tập (Practice Mode).
@@ -164,29 +162,58 @@ class _PracticeBody extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
             children: [
-              LinearProgressIndicator(
-                value: total > 0 ? (currentIdx + 1) / total : 0,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(3),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: total > 0 ? (currentIdx + 1) / total : 0,
+                  minHeight: 7,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Câu ${currentIdx + 1}/$total',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(140),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Câu ${currentIdx + 1}/$total',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  Text(
-                    'Đúng: ${practice.correctCount}/${practice.answeredCount}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
                       color: practice.answeredCount > 0
                           ? (practice.correctCount / practice.answeredCount >= 0.5
-                              ? Colors.green.shade700
-                              : Colors.orange.shade800)
-                          : Colors.grey.shade600,
+                              ? Colors.green.shade50
+                              : Colors.orange.shade50)
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(140),
+                      borderRadius: BorderRadius.circular(8),
+                      border: practice.answeredCount > 0
+                          ? Border.all(
+                              color: practice.correctCount / practice.answeredCount >= 0.5
+                                  ? Colors.green.shade200
+                                  : Colors.orange.shade200,
+                              width: 1,
+                            )
+                          : null,
+                    ),
+                    child: Text(
+                      'Đúng: ${practice.correctCount}/${practice.answeredCount}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: practice.answeredCount > 0
+                            ? (practice.correctCount / practice.answeredCount >= 0.5
+                                ? Colors.green.shade800
+                                : Colors.orange.shade900)
+                            : Colors.grey.shade600,
+                      ),
                     ),
                   ),
                 ],
@@ -204,40 +231,70 @@ class _PracticeBody extends StatelessWidget {
               Card(
                 elevation: 0,
                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(128),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant.withAlpha(80),
+                  ),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
-                              _getCategoryLabel(q.category),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.category_outlined,
+                                  size: 13,
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _getCategoryLabel(q.category),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const Spacer(),
-                          Text(
-                            '#${q.id}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '#${q.id}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
                       Text(
                         q.content.resolve(lang),
                         key: const Key('practice_question_text'),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          height: 1.45,
+                        ),
                       ),
                     ],
                   ),
@@ -249,10 +306,10 @@ class _PracticeBody extends StatelessWidget {
               for (var i = 0; i < q.options.length; i++)
                 _buildOptionTile(context, question: q, optionIndex: i),
 
-              // Khối giải thích & gọi AI (chỉ hiện khi đã chọn đáp án)
+              // Khối phản hồi kết quả Đúng / Sai (chỉ hiện khi đã chọn đáp án)
               if (practice.isAnswered) ...[
                 const SizedBox(height: 16),
-                _buildExplanationSection(context, question: q),
+                _buildResultFeedbackSection(context, question: q),
               ],
             ],
           ),
@@ -304,12 +361,25 @@ class _PracticeBody extends StatelessWidget {
 
     Color? cardColor;
     Color? borderColor;
-    Widget leadingWidget = CircleAvatar(
-      radius: 14,
-      backgroundColor: Colors.transparent,
+    Widget leadingWidget = Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(180),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withAlpha(90),
+          width: 1,
+        ),
+      ),
+      alignment: Alignment.center,
       child: Text(
         String.fromCharCode(65 + optionIndex),
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
     );
 
@@ -335,9 +405,9 @@ class _PracticeBody extends StatelessWidget {
       child: Card(
         color: cardColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: borderColor ?? Theme.of(context).dividerColor.withAlpha(50),
+            color: borderColor ?? Theme.of(context).dividerColor.withAlpha(60),
             width: borderColor != null ? 1.8 : 1,
           ),
         ),
@@ -362,17 +432,18 @@ class _PracticeBody extends StatelessWidget {
     );
   }
 
-  Widget _buildExplanationSection(BuildContext context, {required Question question}) {
+  Widget _buildResultFeedbackSection(BuildContext context, {required Question question}) {
     final isCorrect = practice.isCurrentCorrect;
-    final explanation = question.explanation?.resolve(lang);
 
     return Container(
+      key: const Key('practice_feedback_section'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isCorrect ? Colors.green.shade50.withAlpha(180) : Colors.amber.shade50.withAlpha(180),
-        borderRadius: BorderRadius.circular(12),
+        color: isCorrect ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isCorrect ? Colors.green.shade300 : Colors.amber.shade400,
+          color: isCorrect ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
+          width: 1.5,
         ),
       ),
       child: Column(
@@ -381,67 +452,81 @@ class _PracticeBody extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isCorrect ? Icons.check_circle_outline : Icons.info_outline,
-                color: isCorrect ? Colors.green.shade800 : Colors.amber.shade900,
+                isCorrect ? Icons.check_circle : Icons.cancel,
+                color: isCorrect ? Colors.green.shade700 : Colors.red.shade700,
+                size: 24,
               ),
               const SizedBox(width: 8),
-              Text(
-                isCorrect ? 'Chính xác! 🎉' : 'Chưa đúng!',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isCorrect ? Colors.green.shade900 : Colors.amber.shade900,
+              Expanded(
+                child: Text(
+                  isCorrect
+                      ? switch (lang) {
+                          AppLanguage.vi => 'Chính xác! 🎉',
+                          AppLanguage.en => 'Correct! 🎉',
+                          AppLanguage.both => 'Chính xác! • Correct! 🎉',
+                        }
+                      : switch (lang) {
+                          AppLanguage.vi => 'Chưa chính xác! (Sai)',
+                          AppLanguage.en => 'Incorrect',
+                          AppLanguage.both => 'Chưa chính xác! • Incorrect',
+                        },
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isCorrect ? Colors.green.shade900 : Colors.red.shade900,
+                  ),
                 ),
               ),
-              const Spacer(),
               TextButton.icon(
+                key: const Key('retry_button'),
                 onPressed: practice.retryCurrent,
                 icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Thử lại'),
+                label: Text(switch (lang) {
+                  AppLanguage.vi => 'Thử lại',
+                  AppLanguage.en => 'Retry',
+                  AppLanguage.both => 'Thử lại • Retry',
+                }),
                 style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
               ),
             ],
           ),
-          if (explanation != null && explanation.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Giải thích:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey.shade800,
+          if (!isCorrect) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade300, width: 1.2),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              explanation,
-              key: const Key('practice_explanation_text'),
-              style: const TextStyle(fontSize: 14, height: 1.3),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: switch (lang) {
+                              AppLanguage.vi => 'Đáp án đúng: ',
+                              AppLanguage.en => 'Correct answer: ',
+                              AppLanguage.both => 'Đáp án đúng • Correct: ',
+                            },
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                          TextSpan(
+                            text: question.correctOption.resolve(lang),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-          const SizedBox(height: 12),
-          // Nút gọi AI giải thích sâu hơn
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonalIcon(
-              key: const Key('ask_ai_button'),
-              onPressed: () {
-                final answer = UserAnswer(
-                  question: question,
-                  selectedIndex: practice.selectedAnswer ?? 0,
-                );
-                AIExplanationDialog.show(context, answer);
-              },
-              icon: const Icon(Icons.auto_awesome, size: 18),
-              label: Text(
-                switch (lang) {
-                  AppLanguage.vi => 'Hỏi AI giải thích sâu hơn',
-                  AppLanguage.en => 'Ask AI for detailed explanation',
-                  AppLanguage.both => 'Hỏi AI giải thích • Ask AI',
-                },
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -531,12 +616,12 @@ class _PracticeBody extends StatelessWidget {
           ? 'Xuất sắc! Bạn nắm rất vững kiến thức. 🌟'
           : (percent >= 50
               ? 'Khá tốt! Hãy ôn lại các câu chưa đúng nhé. 👍'
-              : 'Cố gắng lên! Hãy đọc kỹ giải thích để tiến bộ hơn. 💪'),
+              : 'Cố gắng lên! Hãy luyện tập thêm để tiến bộ hơn nhé. 💪'),
       AppLanguage.en => percent >= 80
           ? 'Excellent! You have a strong grasp of the material. 🌟'
           : (percent >= 50
-              ? 'Good job! Keep reviewing what you missed. 👍'
-              : 'Keep going! Read the explanations carefully to improve. 💪'),
+              ? 'Good job! Keep practicing the questions you missed. 👍'
+              : 'Keep going! Practice more to improve. 💪'),
       AppLanguage.both => percent >= 80
           ? 'Xuất sắc! 🌟 • Excellent!'
           : (percent >= 50
@@ -547,15 +632,25 @@ class _PracticeBody extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.emoji_events_outlined, color: Colors.amber, size: 28),
-            const SizedBox(width: 8),
-            Text(switch (lang) {
-              AppLanguage.vi => 'Tổng kết phiên',
-              AppLanguage.en => 'Session Summary',
-              AppLanguage.both => 'Tổng kết • Summary',
-            }),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 24),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(switch (lang) {
+                AppLanguage.vi => 'Tổng kết phiên luyện tập',
+                AppLanguage.en => 'Practice Summary',
+                AppLanguage.both => 'Tổng kết • Summary',
+              }),
+            ),
           ],
         ),
         content: Column(
@@ -569,9 +664,15 @@ class _PracticeBody extends StatelessWidget {
             const SizedBox(height: 16),
             Card(
               elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(ctx).colorScheme.outlineVariant.withAlpha(80),
+                ),
+              ),
               color: Theme.of(ctx).colorScheme.surfaceContainerHighest.withAlpha(128),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
                     Row(
@@ -585,7 +686,7 @@ class _PracticeBody extends StatelessWidget {
                         Text('$answered', style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -600,7 +701,7 @@ class _PracticeBody extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const Divider(height: 16),
+                    const Divider(height: 18),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

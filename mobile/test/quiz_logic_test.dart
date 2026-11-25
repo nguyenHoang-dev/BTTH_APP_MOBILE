@@ -3,15 +3,9 @@ import 'dart:math';
 import 'package:bilingual_quiz/core/errors/app_exception.dart';
 import 'package:bilingual_quiz/core/logic/quiz_engine.dart';
 import 'package:bilingual_quiz/core/state/view_state.dart';
-import 'package:bilingual_quiz/models/ai_explanation.dart';
 import 'package:bilingual_quiz/models/localized_text.dart';
 import 'package:bilingual_quiz/models/question.dart';
-import 'package:bilingual_quiz/models/quiz_result.dart';
 import 'package:bilingual_quiz/providers/quiz_provider.dart';
-import 'package:bilingual_quiz/repositories/ai_repository.dart';
-import 'package:bilingual_quiz/repositories/demo_ai_repository.dart';
-import 'package:bilingual_quiz/services/api_client.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/fakes.dart';
@@ -128,76 +122,5 @@ void main() {
       expect(provider.saveWarning, isNotNull);
     });
   });
-
-  group('AIRepositoryImpl – Demo Mode & fallback', () {
-    final answer = UserAnswer(question: fakeQuestion(1, correct: 2), selectedIndex: 0);
-    final demo = DemoAIRepository(latency: Duration.zero);
-
-    ApiClient offlineClient() {
-      final dio = Dio(BaseOptions(baseUrl: 'http://offline.test'))
-        ..httpClientAdapter = _OfflineAdapter();
-      return ApiClient(baseUrl: 'http://offline.test', dio: dio);
-    }
-
-    test('Demo Mode bật -> trả mock, không gọi mạng', () async {
-      final adapter = _OfflineAdapter();
-      final repo = AIRepositoryImpl(
-        apiClient: ApiClient(
-          baseUrl: 'http://x',
-          dio: Dio()..httpClientAdapter = adapter,
-        ),
-        isDemoMode: () => true,
-        demoRepository: demo,
-      );
-      final r = await repo.explainAnswer(answer, language: AppLanguage.vi);
-      expect(r.source, AISource.demo);
-      expect(adapter.calls, 0);
-    });
-
-    test('Real Mode + mất mạng -> fallback sang Demo kèm notice', () async {
-      final repo = AIRepositoryImpl(
-        apiClient: offlineClient(),
-        isDemoMode: () => false,
-        demoRepository: demo,
-      );
-      final r = await repo.explainAnswer(answer, language: AppLanguage.vi);
-      expect(r.isDemo, isTrue);
-      expect(r.notice, contains('Demo'));
-    });
-
-    test('Real Mode + mất mạng + tắt fallback -> ném AppException', () async {
-      final repo = AIRepositoryImpl(
-        apiClient: offlineClient(),
-        isDemoMode: () => false,
-        demoRepository: demo,
-        fallbackToDemo: false,
-      );
-      expect(
-        () => repo.explainAnswer(answer, language: AppLanguage.vi),
-        throwsA(isA<AppException>().having((e) => e.isConnectivityIssue, 'connectivity', true)),
-      );
-    });
-
-    test('request body đúng định dạng server mong đợi', () {
-      final body = AIRepositoryImpl.buildRequestBody(answer, AppLanguage.en);
-      expect(body['selectedAnswer'], 'A-en');
-      expect(body['correctAnswer'], 'C-en');
-      expect(body['language'], 'en');
-    });
-  });
-}
-
-/// Adapter giả lập mất mạng: mọi request đều lỗi connectionError.
-class _OfflineAdapter implements HttpClientAdapter {
-  int calls = 0;
-
-  @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<List<int>>? requestStream, Future<void>? cancelFuture) {
-    calls++;
-    throw DioException.connectionError(requestOptions: options, reason: 'offline');
-  }
-
-  @override
-  void close({bool force = false}) {}
 }
 
