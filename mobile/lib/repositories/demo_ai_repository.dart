@@ -21,14 +21,24 @@ class DemoAIRepository implements AIRepository {
     final correct = q.correctOption.resolve(lang);
     final hasSelection = answer.selectedIndex >= 0 && answer.selectedIndex < q.options.length;
     final selected = hasSelection ? q.options[answer.selectedIndex].resolve(lang) : '—';
+    final isUserCorrect = answer.isCorrect;
     // Ưu tiên giải thích tĩnh có sẵn trong ngân hàng câu hỏi.
     final staticExplain = q.explanation?.resolve(lang);
 
+    final String whyWrongText;
+    if (isUserCorrect) {
+      whyWrongText = isEn
+          ? 'You selected "$selected" correctly! This option satisfies all the requirements of the question.'
+          : 'Bạn đã chọn đúng "$selected"! Lựa chọn này hoàn toàn chính xác với ngữ cảnh và quy tắc của câu hỏi.';
+    } else {
+      whyWrongText = isEn
+          ? '"$selected" is not correct for this question.'
+          : '"$selected" chưa đúng với yêu cầu của câu hỏi.';
+    }
+
     return AIExplanation(
       source: AISource.demo,
-      whyWrong: isEn
-          ? '"$selected" is not correct for this question.'
-          : '"$selected" chưa đúng với yêu cầu của câu hỏi.',
+      whyWrong: whyWrongText,
       correctExplanation: staticExplain ??
           (isEn ? 'The correct answer is "$correct".' : 'Đáp án đúng là "$correct".'),
       example: isEn
@@ -40,4 +50,3 @@ class DemoAIRepository implements AIRepository {
     );
   }
 }
-

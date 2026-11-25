@@ -10,7 +10,7 @@ import '../providers/ai_provider.dart';
 import '../providers/settings_provider.dart';
 import 'widgets/state_views.dart';
 
-/// Dialog hiển thị lời giải thích của AI cho 1 câu sai.
+/// Dialog hiển thị lời giải thích của AI cho 1 câu hỏi (cả khi chọn đúng hoặc chọn sai).
 class AIExplanationDialog extends StatefulWidget {
   const AIExplanationDialog({super.key, required this.answer});
 
@@ -46,6 +46,7 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
   Future<void> _copyExplanation(AIExplanation data) async {
     final lang = context.read<SettingsProvider>().language;
     final q = widget.answer.question;
+    final isCorrect = widget.answer.isCorrect;
     final hasSelection =
         widget.answer.selectedIndex >= 0 && widget.answer.selectedIndex < q.options.length;
     final selectedText = hasSelection
@@ -55,11 +56,21 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
 
     final buffer = StringBuffer()
       ..writeln('Câu hỏi: ${q.content.resolve(lang)}')
-      ..writeln('Đã chọn: $selectedText')
+      ..writeln('Đã chọn: $selectedText ${isCorrect ? "(Chính xác)" : "(Chưa đúng)"}')
       ..writeln('Đáp án đúng: $correctText')
-      ..writeln()
-      ..writeln('❌ Vì sao sai: ${data.whyWrong}')
-      ..writeln('✅ Đáp án đúng: ${data.correctExplanation}');
+      ..writeln();
+
+    if (isCorrect) {
+      if (data.whyWrong.trim().isNotEmpty) {
+        buffer.writeln('🎯 Phân tích lựa chọn: ${data.whyWrong}');
+      }
+      buffer.writeln('✅ Giải thích chi tiết: ${data.correctExplanation}');
+    } else {
+      buffer
+        ..writeln('❌ Vì sao sai: ${data.whyWrong}')
+        ..writeln('✅ Đáp án đúng: ${data.correctExplanation}');
+    }
+
     if (data.example.trim().isNotEmpty) {
       buffer.writeln('📝 Ví dụ: ${data.example}');
     }
@@ -124,6 +135,7 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
                 EmptyState(:final message) => EmptyView(message: message),
                 SuccessState(:final data) => _ExplanationContent(
                     data: data,
+                    isUserCorrect: widget.answer.isCorrect,
                     isDemoModeSetting: settings.demoMode,
                     onSwitchToDemoMode: () {
                       settings.setDemoMode(true);
@@ -165,12 +177,14 @@ class _QuestionSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final q = answer.question;
+    final isCorrect = answer.isCorrect;
     final hasSelection = answer.selectedIndex >= 0 && answer.selectedIndex < q.options.length;
     final selectedText = hasSelection
         ? q.options[answer.selectedIndex].resolve(language)
         : (language == AppLanguage.en ? '(No answer)' : '(Chưa trả lời)');
     final correctText = q.correctOption.resolve(language);
     final colorScheme = Theme.of(context).colorScheme;
+    final selectedColor = isCorrect ? Colors.green.shade700 : colorScheme.error;
 
     return Container(
       key: const Key('ai_dialog_question_header'),
@@ -194,13 +208,20 @@ class _QuestionSummaryHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.cancel_outlined, size: 16, color: colorScheme.error),
+              Icon(
+                isCorrect ? Icons.check_circle : Icons.cancel_outlined,
+                size: 16,
+                color: selectedColor,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  'Bạn chọn: $selectedText',
+                  isCorrect ? 'Bạn chọn: $selectedText (Chính xác)' : 'Bạn chọn: $selectedText',
                   key: const Key('ai_dialog_selected_answer'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: selectedColor,
+                        fontWeight: isCorrect ? FontWeight.w600 : FontWeight.normal,
+                      ),
                 ),
               ),
             ],
@@ -232,11 +253,13 @@ class _QuestionSummaryHeader extends StatelessWidget {
 class _ExplanationContent extends StatelessWidget {
   const _ExplanationContent({
     required this.data,
+    required this.isUserCorrect,
     required this.isDemoModeSetting,
     required this.onSwitchToDemoMode,
   });
 
   final AIExplanation data;
+  final bool isUserCorrect;
   final bool isDemoModeSetting;
   final VoidCallback onSwitchToDemoMode;
 
@@ -272,8 +295,16 @@ class _ExplanationContent extends StatelessWidget {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
-          _section(context, '❌ Vì sao sai', data.whyWrong),
-          _section(context, '✅ Đáp án đúng', data.correctExplanation),
+          _section(
+            context,
+            isUserCorrect ? '🎯 Phân tích lựa chọn' : '❌ Vì sao sai',
+            data.whyWrong,
+          ),
+          _section(
+            context,
+            isUserCorrect ? '✅ Giải thích chi tiết' : '✅ Đáp án đúng',
+            data.correctExplanation,
+          ),
           _section(context, '📝 Ví dụ', data.example),
           _section(context, '💡 Mẹo nhớ', data.tip),
         ],

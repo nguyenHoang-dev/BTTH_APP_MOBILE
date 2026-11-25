@@ -48,21 +48,29 @@ test('buildExplainPrompt sinh đúng cấu trúc prompt tiếng Việt & tiếng
   assert.match(prompt, /whyWrong/);
 });
 
-test('buildMockExplanation trả đủ 4 trường cho cả vi và en', () => {
-  const vi = buildMockExplanation({
+test('buildMockExplanation trả đủ 4 trường cho cả vi và en (phân biệt chọn đúng và chọn sai)', () => {
+  const viWrong = buildMockExplanation({
     selectedAnswer: 'A',
     correctAnswer: 'B',
     language: 'vi',
   });
-  assert.ok(vi.whyWrong.includes('[DEMO]'));
-  assert.ok(vi.correctExplanation.includes('B'));
+  assert.ok(viWrong.whyWrong.includes('chưa đúng'));
+  assert.ok(viWrong.correctExplanation.includes('B'));
 
-  const en = buildMockExplanation({
+  const viCorrect = buildMockExplanation({
+    selectedAnswer: 'An',
+    correctAnswer: 'An',
+    language: 'vi',
+  });
+  assert.ok(viCorrect.whyWrong.includes('hoàn toàn chính xác'));
+  assert.ok(!viCorrect.whyWrong.includes('chưa đúng'));
+
+  const enWrong = buildMockExplanation({
     selectedAnswer: 'A',
     correctAnswer: 'B',
     language: 'en',
   });
-  assert.ok(en.whyWrong.includes('incorrect'));
+  assert.ok(enWrong.whyWrong.includes('not correct'));
 });
 
 test('errorHandler xử lý lỗi JSON sai định dạng (400) và lỗi server (500) an toàn', () => {

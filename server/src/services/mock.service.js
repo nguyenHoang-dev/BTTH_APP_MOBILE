@@ -2,14 +2,14 @@
  * mock.service.js
  *
  * Dữ liệu giả lập khi server chưa cấu hình GEMINI_API_KEY (Demo Mode).
- * Nội dung đủ ý nghĩa theo category, không dùng prefix [DEMO] để tránh lộ chế độ demo.
+ * Nội dung đủ ý nghĩa theo category và tự động phân biệt khi người học chọn ĐÚNG hoặc chọn SAI.
  */
 
 /** Map category → gợi ý tip tiếng Việt / Anh */
 const CATEGORY_TIPS = {
   grammar: {
-    vi: 'Hãy chú ý đến từ khóa tín hiệu thì (since/for/already/yesterday...) trước khi chọn.',
-    en: 'Look for tense signal words (since, for, already, yesterday...) before choosing.',
+    vi: 'Hãy chú ý đến từ khóa tín hiệu ngữ pháp (since/for/already/yesterday, mạo từ a/an/the...) trước khi chọn.',
+    en: 'Look for grammar signal words (since, for, already, yesterday, articles a/an/the...) before choosing.',
   },
   vocabulary: {
     vi: 'Hãy học từ trong ngữ cảnh câu, không học riêng lẻ từng từ.',
@@ -35,17 +35,43 @@ const DEFAULT_TIP = {
 };
 
 /**
+ * Kiểm tra người dùng có chọn đúng đáp án hay không.
+ */
+function isSelectionCorrect(selectedAnswer, correctAnswer) {
+  if (typeof selectedAnswer !== 'string' || typeof correctAnswer !== 'string') return false;
+  return selectedAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+}
+
+/**
  * Trả về giải thích mock (không dùng Gemini).
  * @param {{ selectedAnswer, correctAnswer, language, category? }} payload
  */
 function buildMockExplanation({ selectedAnswer, correctAnswer, language, category }) {
   const tip = (CATEGORY_TIPS[category] || DEFAULT_TIP)[language === 'en' ? 'en' : 'vi'];
+  const isCorrect = isSelectionCorrect(selectedAnswer, correctAnswer);
 
   if (language === 'en') {
+    if (isCorrect) {
+      return {
+        whyWrong: `Great job! You selected "${selectedAnswer}", which is the exact correct answer. Other options do not fit the grammatical or technical requirements of this question.`,
+        correctExplanation: `"${correctAnswer}" is the right choice because it directly satisfies the rule being tested in this question.`,
+        example: `Try creating another example using "${correctAnswer}" in a similar context to remember this rule permanently.`,
+        tip,
+      };
+    }
     return {
       whyWrong: `"${selectedAnswer}" is not correct here. The question is testing a specific concept that this option does not satisfy.`,
       correctExplanation: `The correct answer is "${correctAnswer}". It directly matches what the question is asking about — review this concept to understand why.`,
       example: `When you see a similar question, focus on the key conditions and eliminate options that do not fit the context.`,
+      tip,
+    };
+  }
+
+  if (isCorrect) {
+    return {
+      whyWrong: `Tuyệt vời! Bạn đã chọn "${selectedAnswer}" hoàn toàn chính xác. Các phương án gây nhiễu còn lại không thỏa mãn quy tắc hoặc ngữ cảnh của câu hỏi này.`,
+      correctExplanation: `Đáp án đúng là "${correctAnswer}" vì nó khớp trực tiếp với quy tắc trọng tâm mà câu hỏi đang kiểm tra.`,
+      example: `Khi gặp dạng câu hỏi tương tự, hãy nhận diện dấu hiệu chính trong câu để chọn ngay "${correctAnswer}" và loại trừ các đáp án gây nhiễu.`,
       tip,
     };
   }
@@ -58,5 +84,4 @@ function buildMockExplanation({ selectedAnswer, correctAnswer, language, categor
   };
 }
 
-module.exports = { buildMockExplanation };
-
+module.exports = { buildMockExplanation, isSelectionCorrect };

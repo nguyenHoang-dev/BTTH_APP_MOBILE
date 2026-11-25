@@ -145,7 +145,38 @@ void main() {
       expect(find.text('Câu hỏi 10'), findsOneWidget);
       expect(find.textContaining('Bạn chọn: A-vi'), findsOneWidget);
       expect(find.textContaining('Đáp án đúng: C-vi'), findsOneWidget);
+      expect(find.text('❌ Vì sao sai'), findsOneWidget);
       expect(find.byKey(const Key('copy_explanation_button')), findsOneWidget);
+    });
+
+    testWidgets('6. AIExplanationDialog khi người dùng CHỌN ĐÚNG (Practice Mode) không hiển thị báo sai vô lý',
+        (tester) async {
+      final correctAnswer = UserAnswer(
+        question: fakeQuestion(11, correct: 1),
+        selectedIndex: 1, // Chọn đúng đáp án B
+      );
+      final aiProvider = AIProvider(aiRepository: zeroLatencyDemo);
+      final settingsProvider = SettingsProvider(demoMode: true, language: AppLanguage.vi);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: settingsProvider),
+            ChangeNotifierProvider.value(value: aiProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: AIExplanationDialog(answer: correctAnswer),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Bạn chọn: B-vi (Chính xác)'), findsOneWidget);
+      expect(find.text('🎯 Phân tích lựa chọn'), findsOneWidget);
+      expect(find.text('❌ Vì sao sai'), findsNothing);
     });
   });
 }

@@ -7,7 +7,7 @@ import '../models/quiz_result.dart';
 import '../services/api_client.dart';
 import 'demo_ai_repository.dart';
 
-/// Hợp đồng gọi AI giải thích câu sai.
+/// Hợp đồng gọi AI giải thích câu hỏi.
 abstract interface class AIRepository {
   Future<AIExplanation> explainAnswer(UserAnswer answer, {required AppLanguage language});
 }
@@ -41,7 +41,22 @@ class AIRepositoryImpl implements AIRepository {
 
     try {
       final json = await _api.post(explainPath, body: buildRequestBody(answer, language));
-      return AIExplanation.fromJson(json);
+      final parsed = AIExplanation.fromJson(json);
+      // Nếu server đang chạy ở chế độ Demo (chưa có GEMINI_API_KEY) và câu hỏi có sẵn
+      // lời giải thích tĩnh chính xác trong ngân hàng câu hỏi, kết hợp để hiển thị sâu sắc hơn.
+      final lang = language == AppLanguage.en ? AppLanguage.en : AppLanguage.vi;
+      final staticExplain = answer.question.explanation?.resolve(lang);
+      if (parsed.isDemo && staticExplain != null && staticExplain.trim().isNotEmpty) {
+        return AIExplanation(
+          whyWrong: parsed.whyWrong,
+          correctExplanation: '$staticExplain\n\n${parsed.correctExplanation}',
+          example: parsed.example,
+          tip: parsed.tip,
+          source: parsed.source,
+          notice: parsed.notice,
+        );
+      }
+      return parsed;
     } on AppException catch (e) {
       if (fallbackToDemo && e.isConnectivityIssue) {
         final demo = await _demo.explainAnswer(answer, language: language);
@@ -66,6 +81,7 @@ class AIRepositoryImpl implements AIRepository {
       'selectedAnswer': selected,
       'correctAnswer': q.correctOption.resolve(lang),
       'language': lang.code,
+      'category': q.category.toLowerCase(),
     };
   }
 }
