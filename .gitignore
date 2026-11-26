@@ -5,6 +5,9 @@ mobile/android/build/
 mobile/android/app/build/
 mobile/android/.gradle/
 mobile/.flutter-plugins-dependencies
+mobile/android/key.properties
+mobile/android/app/*.jks
+mobile/android/app/*.keystore
 
 # Node
 server/node_modules/

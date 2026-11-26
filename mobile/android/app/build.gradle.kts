@@ -2,11 +2,19 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.Properties
 
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val releaseKeyPropertiesFile = rootProject.file("key.properties")
+val releaseKeyProperties = Properties().apply {
+    if (releaseKeyPropertiesFile.exists()) {
+        releaseKeyPropertiesFile.inputStream().use(::load)
+    }
 }
 
 android {
@@ -30,6 +38,15 @@ android {
         getByName("debug") {
             storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
         }
+        create("release") {
+            val keystorePath = releaseKeyProperties.getProperty("storeFile")
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+            }
+            storePassword = releaseKeyProperties.getProperty("storePassword")
+            keyAlias = releaseKeyProperties.getProperty("keyAlias")
+            keyPassword = releaseKeyProperties.getProperty("keyPassword")
+        }
     }
 
     buildTypes {
@@ -40,7 +57,7 @@ android {
             }
         }
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             ndk {
                 abiFilters += listOf("arm64-v8a", "x86_64")
             }
@@ -147,23 +164,28 @@ tasks.configureEach {
     ) {
         enabled = false
     }
+    // Native debug symbols are discarded from this app; avoid requiring NDK llvm-objcopy.
+    if (name.startsWith("extract") && name.endsWith("NativeSymbolTables")) {
+        enabled = false
+    }
     if (name == "stripDebugDebugSymbols" || name == "stripReleaseDebugSymbols" || name == "stripProfileDebugSymbols") {
+        outputs.upToDateWhen { false }
         actions.clear()
         doLast {
             val variant = when {
-                name.contains("Debug") -> "debug"
-                name.contains("Profile") -> "profile"
+                name.startsWith("stripDebug") -> "debug"
+                name.startsWith("stripProfile") -> "profile"
                 else -> "release"
             }
             val cap = variant.replaceFirstChar { it.uppercase() }
-            val buildDir = project.layout.buildDirectory.get().asFile
-            val inDir = File(buildDir, "intermediates/merged_native_libs/$variant/merge${cap}NativeLibs/out")
-            val outDir = File(buildDir, "intermediates/stripped_native_libs/$variant/strip${cap}DebugSymbols/out")
+            val flutterBuildDir = File(project.projectDir, "../../build/app").canonicalFile
+            val inDir = File(flutterBuildDir, "intermediates/merged_native_libs/$variant/merge${cap}NativeLibs/out")
+            val outDir = File(flutterBuildDir, "intermediates/stripped_native_libs/$variant/strip${cap}DebugSymbols/out")
             if (inDir.exists()) {
-                File(inDir, "lib/armeabi-v7a").deleteRecursively()
-                inDir.walkTopDown().filter { it.isFile && it.extension == "so" }.forEach { stripElf64(it) }
                 outDir.deleteRecursively()
-                inDir.renameTo(outDir)
+                inDir.copyRecursively(outDir, overwrite = true)
+                File(outDir, "lib/armeabi-v7a").deleteRecursively()
+                outDir.walkTopDown().filter { it.isFile && it.extension == "so" }.forEach { stripElf64(it) }
             }
         }
     }

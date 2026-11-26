@@ -24,7 +24,8 @@ class _QuizScreenState extends State<QuizScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
-  void _start() => context.read<QuizProvider>().startQuiz(onlyWrong: widget.onlyWrong);
+  void _start() =>
+      context.read<QuizProvider>().startQuiz(onlyWrong: widget.onlyWrong);
 
   Future<void> _submit(QuizProvider quiz) async {
     final unanswered = quiz.questions.length - quiz.answeredCount;
@@ -35,8 +36,14 @@ class _QuizScreenState extends State<QuizScreen> {
           title: const Text('Nộp bài?'),
           content: Text('Còn $unanswered câu chưa trả lời (sẽ tính là sai).'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Làm tiếp')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Nộp bài')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Làm tiếp'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Nộp bài'),
+            ),
           ],
         ),
       );
@@ -47,7 +54,8 @@ class _QuizScreenState extends State<QuizScreen> {
     if (!mounted) return;
     final warning = quiz.saveWarning;
     if (warning != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(warning)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(warning)));
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => ResultScreen(result: result)),
@@ -61,15 +69,19 @@ class _QuizScreenState extends State<QuizScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.onlyWrong ? 'Ôn câu sai' : 'Làm bài')),
       body: switch (quiz.state) {
-        IdleState() || LoadingState() => const LoadingView(message: 'Đang nạp câu hỏi...'),
-        ErrorState(:final message) => ErrorView(message: message, onRetry: _start),
+        IdleState() ||
+        LoadingState() => const LoadingView(message: 'Đang nạp câu hỏi...'),
+        ErrorState(:final message) => ErrorView(
+          message: message,
+          onRetry: _start,
+        ),
         EmptyState(:final message) => EmptyView(
-            message: message,
-            action: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Quay lại'),
-            ),
+          message: message,
+          action: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Quay lại'),
           ),
+        ),
         SuccessState() => _QuizBody(quiz: quiz, onSubmit: () => _submit(quiz)),
       },
     );
@@ -83,7 +95,9 @@ class _QuizBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = context.select<SettingsProvider, AppLanguage>((s) => s.language);
+    final lang = context.select<SettingsProvider, AppLanguage>(
+      (s) => s.language,
+    );
     final q = quiz.currentQuestion!;
     final total = quiz.questions.length;
 
@@ -109,10 +123,14 @@ class _QuizBody extends StatelessWidget {
               itemBuilder: (_, i) {
                 final selected = quiz.selectedIndexForCurrent == i;
                 return Card(
-                  color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
+                  color: selected
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : null,
                   child: ListTile(
                     key: Key('option_$i'),
-                    leading: CircleAvatar(child: Text(String.fromCharCode(65 + i))),
+                    leading: CircleAvatar(
+                      child: Text(String.fromCharCode(65 + i)),
+                    ),
                     title: Text(q.options[i].resolve(lang)),
                     onTap: () => quiz.selectAnswer(i),
                   ),
@@ -122,26 +140,45 @@ class _QuizBody extends StatelessWidget {
           ),
           Row(
             children: [
-              OutlinedButton(
-                onPressed: quiz.isFirst ? null : quiz.previous,
-                child: const Text('Câu trước'),
-              ),
-              const Spacer(),
-              if (quiz.isLast)
-                FilledButton(
-                  key: const Key('submit_button'),
-                  onPressed: quiz.isSubmitting ? null : onSubmit,
-                  child: quiz.isSubmitting
-                      ? const SizedBox.square(
-                          dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Nộp bài'),
-                )
-              else
-                FilledButton(
-                  key: const Key('next_button'),
-                  onPressed: quiz.next,
-                  child: const Text('Câu tiếp'),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: quiz.isFirst ? null : quiz.previous,
+                  child: const Text(
+                    'Câu trước',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: quiz.isLast
+                    ? FilledButton(
+                        key: const Key('submit_button'),
+                        onPressed: quiz.isSubmitting ? null : onSubmit,
+                        child: quiz.isSubmitting
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Nộp bài',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                      )
+                    : FilledButton(
+                        key: const Key('next_button'),
+                        onPressed: quiz.next,
+                        child: const Text(
+                          'Câu tiếp',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+              ),
             ],
           ),
         ],
@@ -149,4 +186,3 @@ class _QuizBody extends StatelessWidget {
     );
   }
 }
-

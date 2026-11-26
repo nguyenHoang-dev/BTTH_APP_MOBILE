@@ -48,7 +48,8 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
     final q = widget.answer.question;
     final isCorrect = widget.answer.isCorrect;
     final hasSelection =
-        widget.answer.selectedIndex >= 0 && widget.answer.selectedIndex < q.options.length;
+        widget.answer.selectedIndex >= 0 &&
+        widget.answer.selectedIndex < q.options.length;
     final selectedText = hasSelection
         ? q.options[widget.answer.selectedIndex].resolve(lang)
         : (lang == AppLanguage.en ? '(No answer)' : '(Chưa chọn)');
@@ -56,7 +57,9 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
 
     final buffer = StringBuffer()
       ..writeln('Câu hỏi: ${q.content.resolve(lang)}')
-      ..writeln('Đã chọn: $selectedText ${isCorrect ? "(Chính xác)" : "(Chưa đúng)"}')
+      ..writeln(
+        'Đã chọn: $selectedText ${isCorrect ? "(Chính xác)" : "(Chưa đúng)"}',
+      )
       ..writeln('Đáp án đúng: $correctText')
       ..writeln();
 
@@ -101,11 +104,15 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
 
     return AlertDialog(
       title: const Row(
-        children: [Icon(Icons.auto_awesome), SizedBox(width: 8), Text('AI giải thích')],
+        children: [
+          Icon(Icons.auto_awesome),
+          SizedBox(width: 8),
+          Text('AI giải thích'),
+        ],
       ),
       content: SizedBox(
         width: double.maxFinite,
-        height: 440,
+        height: (MediaQuery.sizeOf(context).height * 0.55).clamp(240.0, 440.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -116,31 +123,33 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
             const Divider(height: 16),
             Expanded(
               child: switch (state) {
-                IdleState() || LoadingState() => const LoadingView(message: 'AI đang phân tích...'),
+                IdleState() || LoadingState() => const LoadingView(
+                  message: 'AI đang phân tích...',
+                ),
                 ErrorState(:final message) => ErrorView(
-                    message: message,
-                    onRetry: () => _explain(force: true),
-                    extraAction: settings.demoMode
-                        ? null
-                        : TextButton.icon(
-                            key: const Key('switch_demo_mode_button'),
-                            onPressed: () {
-                              settings.setDemoMode(true);
-                              _explain(force: true);
-                            },
-                            icon: const Icon(Icons.science_outlined),
-                            label: const Text('Chuyển sang Chế độ Demo'),
-                          ),
-                  ),
+                  message: message,
+                  onRetry: () => _explain(force: true),
+                  extraAction: settings.demoMode
+                      ? null
+                      : TextButton.icon(
+                          key: const Key('switch_demo_mode_button'),
+                          onPressed: () {
+                            settings.setDemoMode(true);
+                            _explain(force: true);
+                          },
+                          icon: const Icon(Icons.science_outlined),
+                          label: const Text('Chuyển sang Chế độ Demo'),
+                        ),
+                ),
                 EmptyState(:final message) => EmptyView(message: message),
                 SuccessState(:final data) => _ExplanationContent(
-                    data: data,
-                    isUserCorrect: widget.answer.isCorrect,
-                    isDemoModeSetting: settings.demoMode,
-                    onSwitchToDemoMode: () {
-                      settings.setDemoMode(true);
-                    },
-                  ),
+                  data: data,
+                  isUserCorrect: widget.answer.isCorrect,
+                  isDemoModeSetting: settings.demoMode,
+                  onSwitchToDemoMode: () {
+                    settings.setDemoMode(true);
+                  },
+                ),
               },
             ),
           ],
@@ -166,10 +175,7 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
 
 /// Phần đầu Dialog: hiển thị rõ câu hỏi, đáp án người dùng đã chọn và đáp án đúng.
 class _QuestionSummaryHeader extends StatelessWidget {
-  const _QuestionSummaryHeader({
-    required this.answer,
-    required this.language,
-  });
+  const _QuestionSummaryHeader({required this.answer, required this.language});
 
   final UserAnswer answer;
   final AppLanguage language;
@@ -178,7 +184,8 @@ class _QuestionSummaryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final q = answer.question;
     final isCorrect = answer.isCorrect;
-    final hasSelection = answer.selectedIndex >= 0 && answer.selectedIndex < q.options.length;
+    final hasSelection =
+        answer.selectedIndex >= 0 && answer.selectedIndex < q.options.length;
     final selectedText = hasSelection
         ? q.options[answer.selectedIndex].resolve(language)
         : (language == AppLanguage.en ? '(No answer)' : '(Chưa trả lời)');
@@ -202,7 +209,8 @@ class _QuestionSummaryHeader extends StatelessWidget {
             key: const Key('ai_dialog_question_text'),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Row(
@@ -216,12 +224,14 @@ class _QuestionSummaryHeader extends StatelessWidget {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  isCorrect ? 'Bạn chọn: $selectedText (Chính xác)' : 'Bạn chọn: $selectedText',
+                  isCorrect
+                      ? 'Bạn chọn: $selectedText (Chính xác)'
+                      : 'Bạn chọn: $selectedText',
                   key: const Key('ai_dialog_selected_answer'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: selectedColor,
-                        fontWeight: isCorrect ? FontWeight.w600 : FontWeight.normal,
-                      ),
+                    color: selectedColor,
+                    fontWeight: isCorrect ? FontWeight.w600 : FontWeight.normal,
+                  ),
                 ),
               ),
             ],
@@ -230,16 +240,20 @@ class _QuestionSummaryHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+              const Icon(
+                Icons.check_circle_outline,
+                size: 16,
+                color: Colors.green,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   'Đáp án đúng: $correctText',
                   key: const Key('ai_dialog_correct_answer'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.green.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

@@ -68,7 +68,7 @@ BTL_APP/
 
 ## 3. Yêu cầu môi trường & Cài đặt (Dưới 15 phút)
 
-- **Flutter SDK**: `>= 3.13` (Dart `>= 3.13`)
+- **Flutter SDK**: `3.47.7` (Dart `3.13.5`, cùng phiên bản CI)
 - **Node.js**: `>= 18` (dùng sẵn `fetch` và `AbortSignal.timeout`)
 - **Thiết bị chạy**: Trình duyệt **Chrome** (chạy ngay không cần máy ảo), **Máy ảo Android (`pixel_avd`)**, hoặc **Điện thoại Android thật**.
 
@@ -104,13 +104,15 @@ npm run dev
 
 ### Terminal 2 – Chạy Ứng dụng Flutter
 
-#### Cách A: Chạy trên Máy ảo Android (`pixel_avd` / `emulator-5554`)
+#### Cách A: Chạy trên Máy ảo Android (chọn tên máy ảo có trong `flutter emulators`)
 Ứng dụng tự nhận diện máy ảo và gọi server qua `http://10.0.2.2:3000`, lưu lịch sử vào **SQLite (`sqflite`)**:
 ```powershell
 cd mobile
 
 # 1. Bật máy ảo Android (chạy ngầm – mất khoảng 15–25 giây để Android khởi động xong)
-flutter emulators --launch pixel_avd
+flutter emulators
+# Thay <avd_id> bằng ID hiển thị ở lệnh trên
+flutter emulators --launch <avd_id>
 
 # 2. Chờ đến khi máy ảo hiện màn hình chính (hoặc gõ `flutter devices` thấy `emulator-5554`), rồi chạy:
 flutter run -d emulator-5554 --device-timeout 60
@@ -129,13 +131,30 @@ Lấy địa chỉ IPv4 LAN của máy tính (gõ `ipconfig` trong PowerShell, v
 cd mobile
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000
 ```
-*(Lưu ý: nếu chạy trên điện thoại thật để build bản cài đặt khi đang bật giới hạn `x86_64` trong `android/app/build.gradle.kts`, hãy thêm `"arm64-v8a"` vào `abiFilters` và bỏ `"**/arm64-v8a/**"` khỏi `excludes`).*
+Máy chủ phải cho phép kết nối qua mạng LAN; mở cổng 3000 trên firewall nếu Windows chặn kết nối.
 
 #### Cách D: Chạy cưỡng bức ở Chế độ Demo (Offline 100%)
 ```powershell
 cd mobile
 flutter run --dart-define=DEMO_MODE=true
 ```
+
+### Tạo APK release đã ký
+
+Release dùng keystore cá nhân, không dùng debug keystore. Tạo keystore và file cấu hình riêng (không commit hai file này):
+
+```powershell
+keytool -genkeypair -v -keystore "$env:USERPROFILE\.android\btl-app-release.jks" -keyalg RSA -keysize 3072 -validity 10000 -alias btl-app-release
+```
+
+Tạo `mobile/android/key.properties` với các giá trị `storeFile`, `storePassword`, `keyAlias` và `keyPassword`; đặt đường dẫn keystore vào `storeFile`. `.gitignore` loại file cấu hình và keystore khỏi Git. Sau đó chạy:
+
+```powershell
+cd mobile
+flutter build apk --release
+```
+
+APK nằm tại `mobile/build/app/outputs/flutter-apk/app-release.apk`. Sao lưu keystore và mật khẩu ở nơi an toàn; mất keystore sẽ không thể phát hành bản cập nhật dùng cùng chữ ký.
 
 ---
 

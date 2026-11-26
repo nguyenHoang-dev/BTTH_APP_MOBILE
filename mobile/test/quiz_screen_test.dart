@@ -27,9 +27,11 @@ Widget _buildTestApp(FakeQuizRepository quizRepo) {
 
 void main() {
   testWidgets('Hiển thị Loading rồi câu hỏi đầu tiên', (tester) async {
-    await tester.pumpWidget(_buildTestApp(
-      FakeQuizRepository(questions: List.generate(3, fakeQuestion)),
-    ));
+    await tester.pumpWidget(
+      _buildTestApp(
+        FakeQuizRepository(questions: List.generate(3, fakeQuestion)),
+      ),
+    );
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
@@ -40,9 +42,11 @@ void main() {
   });
 
   testWidgets('Chọn đáp án & chuyển câu tiếp', (tester) async {
-    await tester.pumpWidget(_buildTestApp(
-      FakeQuizRepository(questions: List.generate(3, fakeQuestion)),
-    ));
+    await tester.pumpWidget(
+      _buildTestApp(
+        FakeQuizRepository(questions: List.generate(3, fakeQuestion)),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('option_1')));
@@ -52,10 +56,16 @@ void main() {
     expect(find.text('Câu 2/3  •  test'), findsOneWidget);
   });
 
-  testWidgets('Repository lỗi -> hiển thị thông báo & nút Thử lại', (tester) async {
-    await tester.pumpWidget(_buildTestApp(
-      FakeQuizRepository(error: const AppException('Không đọc được ngân hàng câu hỏi.')),
-    ));
+  testWidgets('Repository lỗi -> hiển thị thông báo & nút Thử lại', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTestApp(
+        FakeQuizRepository(
+          error: const AppException('Không đọc được ngân hàng câu hỏi.'),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Không đọc được ngân hàng câu hỏi.'), findsOneWidget);
@@ -68,5 +78,25 @@ void main() {
 
     expect(find.text('Ngân hàng câu hỏi đang trống.'), findsOneWidget);
   });
-}
 
+  testWidgets('Bố cục câu hỏi không tràn ở màn hình nhỏ và lớn', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    for (final size in [const Size(320, 568), const Size(1280, 800)]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        _buildTestApp(
+          FakeQuizRepository(questions: List.generate(3, fakeQuestion)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('question_text')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
+}

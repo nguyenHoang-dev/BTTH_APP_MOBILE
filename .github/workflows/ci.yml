@@ -20,7 +20,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: "3.47.7"
           cache: true
 
       - name: Install dependencies
@@ -51,6 +51,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Run server tests
+        run: npm test
 
       - name: Check JS syntax
         run: |
