@@ -101,13 +101,14 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
   Widget build(BuildContext context) {
     final state = context.watch<AIProvider>().state;
     final settings = context.watch<SettingsProvider>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.auto_awesome),
-          SizedBox(width: 8),
-          Expanded(
+          Icon(Icons.auto_awesome, color: colorScheme.primary),
+          const SizedBox(width: 8),
+          const Expanded(
             child: Text(
               'AI giải thích',
               maxLines: 1,
@@ -205,7 +206,10 @@ class _QuestionSummaryHeader extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +220,7 @@ class _QuestionSummaryHeader extends StatelessWidget {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Row(
@@ -290,22 +294,25 @@ class _ExplanationContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (data.isDemo)
-            Wrap(
-              spacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Chip(
-                  avatar: Icon(Icons.science, size: 18),
-                  label: Text('Dữ liệu Demo'),
-                ),
-                if (data.notice != null && !isDemoModeSetting)
-                  TextButton.icon(
-                    key: const Key('quick_enable_demo_button'),
-                    onPressed: onSwitchToDemoMode,
-                    icon: const Icon(Icons.toggle_on_outlined, size: 18),
-                    label: const Text('Bật luôn Chế độ Demo'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Wrap(
+                spacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Chip(
+                    avatar: Icon(Icons.science, size: 18),
+                    label: Text('Dữ liệu Demo'),
                   ),
-              ],
+                  if (data.notice != null && !isDemoModeSetting)
+                    TextButton.icon(
+                      key: const Key('quick_enable_demo_button'),
+                      onPressed: onSwitchToDemoMode,
+                      icon: const Icon(Icons.toggle_on_outlined, size: 18),
+                      label: const Text('Bật luôn Chế độ Demo'),
+                    ),
+                ],
+              ),
             ),
           if (data.notice != null)
             Padding(
@@ -319,29 +326,61 @@ class _ExplanationContent extends StatelessWidget {
             context,
             isUserCorrect ? '🎯 Phân tích lựa chọn' : '❌ Vì sao sai',
             data.whyWrong,
+            accentColor: isUserCorrect
+                ? const Color(0xFF0D9488)
+                : const Color(0xFFDC2626),
           ),
           _section(
             context,
             isUserCorrect ? '✅ Giải thích chi tiết' : '✅ Đáp án đúng',
             data.correctExplanation,
+            accentColor: const Color(0xFF16A34A),
           ),
-          _section(context, '📝 Ví dụ', data.example),
-          _section(context, '💡 Mẹo nhớ', data.tip),
+          _section(
+            context,
+            '📝 Ví dụ',
+            data.example,
+            accentColor: const Color(0xFF4F46E5),
+          ),
+          _section(
+            context,
+            '💡 Mẹo nhớ',
+            data.tip,
+            accentColor: const Color(0xFFD97706),
+          ),
         ],
       ),
     );
   }
 
-  Widget _section(BuildContext context, String title, String body) {
+  Widget _section(
+    BuildContext context,
+    String title,
+    String body, {
+    required Color accentColor,
+  }) {
     if (body.trim().isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accentColor.withValues(alpha: 0.22)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: accentColor,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(body),
+          Text(body, style: const TextStyle(height: 1.35)),
         ],
       ),
     );

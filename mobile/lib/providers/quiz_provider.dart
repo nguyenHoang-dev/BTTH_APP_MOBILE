@@ -51,6 +51,8 @@ class QuizProvider extends ChangeNotifier {
   Question? get currentQuestion =>
       questions.isEmpty ? null : questions[_currentIndex];
   int? get selectedIndexForCurrent => _answers[_currentIndex];
+  bool isQuestionAnswered(int index) => _answers.containsKey(index);
+  int? answerFor(int index) => _answers[index];
   bool get isFirst => _currentIndex == 0;
   bool get isLast => _currentIndex == questions.length - 1;
   int get answeredCount => _answers.length;
@@ -133,6 +135,14 @@ class QuizProvider extends ChangeNotifier {
   void previous() {
     if (!isFirst) {
       _currentIndex--;
+      notifyListeners();
+    }
+  }
+
+  /// Nhảy nhanh tới câu hỏi bất kỳ từ Bảng điều hướng câu hỏi (Question Palette).
+  void jumpToQuestion(int index) {
+    if (index >= 0 && index < questions.length && index != _currentIndex) {
+      _currentIndex = index;
       notifyListeners();
     }
   }
