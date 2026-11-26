@@ -107,7 +107,13 @@ class _AIExplanationDialogState extends State<AIExplanationDialog> {
         children: [
           Icon(Icons.auto_awesome),
           SizedBox(width: 8),
-          Text('AI giải thích'),
+          Expanded(
+            child: Text(
+              'AI giải thích',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: SizedBox(
