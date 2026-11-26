@@ -125,6 +125,19 @@ cd mobile
 flutter run -d chrome
 ```
 
+#### Mở bản Demo trên iPhone bằng Safari (cùng Wi-Fi với máy tính)
+Không dùng `flutter run -d web-server` để chia sẻ bản debug qua LAN; debug service chạy riêng và Safari trên điện thoại không truy cập được. Hãy build bản web release ở chế độ Demo rồi phục vụ thư mục tĩnh:
+```powershell
+cd mobile
+flutter build web --release --dart-define=DEMO_MODE=true
+python -m http.server 8080 --bind 0.0.0.0 --directory build/web
+```
+Lấy IPv4 Wi-Fi của máy tính bằng `ipconfig`, rồi mở `http://<IP-may-tinh>:8080` trên Safari. Nếu Windows Firewall chặn kết nối, mở PowerShell với quyền Administrator và chỉ cho phép mạng riêng/local subnet:
+```powershell
+New-NetFirewallRule -DisplayName "Flutter Demo Server TCP 8080" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 -Profile Private -RemoteAddress LocalSubnet
+```
+Nhấn `Ctrl+C` trong cửa sổ server để dừng chia sẻ. Bản web lưu lịch sử trong bộ nhớ trình duyệt; dữ liệu lịch sử sẽ mất khi tải lại trang.
+
 #### Cách C: Chạy trên Điện thoại Android thật (cùng mạng Wi-Fi với máy tính)
 Lấy địa chỉ IPv4 LAN của máy tính (gõ `ipconfig` trong PowerShell, ví dụ `192.168.1.10`) và truyền qua `--dart-define`:
 ```powershell
