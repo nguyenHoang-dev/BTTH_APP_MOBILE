@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "description": "Ngân hàng câu hỏi mẫu. Mở rộng lên 300 câu theo đúng cấu trúc này.",
+  "questions": [
+    {
+      "id": 1,
+      "category": "grammar",
+      "question": { "vi": "Chọn thì đúng: \"She ___ here since 2010.\"", "en": "Choose the correct tense: \"She ___ here since 2010.\"" },
+      "options": [
+        { "vi": "lives", "en": "lives" },
+        { "vi": "lived", "en": "lived" },
+        { "vi": "has lived", "en": "has lived" },
+        { "vi": "is living", "en": "is living" }
+      ],
+      "correctIndex": 2,
+      "explanation": { "vi": "\"since + mốc thời gian\" là dấu hiệu của thì hiện tại hoàn thành.", "en": "\"since + point in time\" signals the present perfect tense." }
+    },
+    {
+      "id": 2,
+      "category": "vocabulary",
+      "question": { "vi": "\"Thư viện\" trong tiếng Anh là gì?", "en": "What is the English word for \"thư viện\"?" },
+      "options": [
+        { "vi": "Bookstore", "en": "Bookstore" },
+        { "vi": "Library", "en": "Library" },
+        { "vi": "Laboratory", "en": "Laboratory" },
+        { "vi": "Librarian", "en": "Librarian" }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "Library = thư viện; Librarian = thủ thư; Bookstore = hiệu sách.", "en": "Library = place to borrow books; Librarian = the person; Bookstore = shop." }
+    },
+    {
+      "id": 3,
+      "category": "flutter",
+      "question": { "vi": "Widget nào dùng để hiển thị danh sách cuộn dài một cách hiệu quả?", "en": "Which widget efficiently displays a long scrollable list?" },
+      "options": [
+        { "vi": "Column", "en": "Column" },
+        { "vi": "ListView.builder", "en": "ListView.builder" },
+        { "vi": "Stack", "en": "Stack" },
+        { "vi": "Row", "en": "Row" }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "ListView.builder chỉ dựng các item đang hiển thị (lazy).", "en": "ListView.builder builds only visible items lazily." }
+    },
+    {
+      "id": 4,
+      "category": "flutter",
+      "question": { "vi": "Phương thức nào KHÔNG nên gọi API mạng bên trong?", "en": "Inside which method should you NOT call a network API?" },
+      "options": [
+        { "vi": "initState()", "en": "initState()" },
+        { "vi": "build()", "en": "build()" },
+        { "vi": "Hàm của Provider", "en": "A Provider method" },
+        { "vi": "Repository", "en": "Repository" }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "build() có thể chạy rất nhiều lần, gọi mạng ở đây gây request lặp.", "en": "build() may run many times, causing repeated requests." }
+    },
+    {
+      "id": 5,
+      "category": "grammar",
+      "question": { "vi": "Chọn mạo từ đúng: \"___ apple a day keeps the doctor away.\"", "en": "Choose the correct article: \"___ apple a day keeps the doctor away.\"" },
+      "options": [
+        { "vi": "A", "en": "A" },
+        { "vi": "An", "en": "An" },
+        { "vi": "The", "en": "The" },
+        { "vi": "Không dùng mạo từ", "en": "No article" }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "Dùng \"an\" trước từ bắt đầu bằng nguyên âm.", "en": "Use \"an\" before a vowel sound." }
+    },
+    {
+      "id": 6,
+      "category": "vocabulary",
+      "question": { "vi": "Từ trái nghĩa của \"ancient\" là gì?", "en": "What is the opposite of \"ancient\"?" },
+      "options": [
+        { "vi": "Old", "en": "Old" },
+        { "vi": "Historic", "en": "Historic" },
+        { "vi": "Modern", "en": "Modern" },
+        { "vi": "Antique", "en": "Antique" }
+      ],
+      "correctIndex": 2,
+      "explanation": { "vi": "Ancient = cổ xưa; Modern = hiện đại.", "en": "Ancient = very old; Modern = current/new." }
+    },
+    {
+      "id": 7,
+      "category": "flutter",
+      "question": { "vi": "Thư viện nào dùng để lưu dữ liệu SQLite cục bộ trong Flutter?", "en": "Which package stores local SQLite data in Flutter?" },
+      "options": [
+        { "vi": "dio", "en": "dio" },
+        { "vi": "provider", "en": "provider" },
+        { "vi": "sqflite", "en": "sqflite" },
+        { "vi": "http", "en": "http" }
+      ],
+      "correctIndex": 2,
+      "explanation": { "vi": "sqflite là plugin SQLite cho Flutter.", "en": "sqflite is the SQLite plugin for Flutter." }
+    },
+    {
+      "id": 8,
+      "category": "grammar",
+      "question": { "vi": "Câu bị động đúng của \"They built this bridge in 1990\" là:", "en": "The correct passive form of \"They built this bridge in 1990\" is:" },
+      "options": [
+        { "vi": "This bridge built in 1990.", "en": "This bridge built in 1990." },
+        { "vi": "This bridge was built in 1990.", "en": "This bridge was built in 1990." },
+        { "vi": "This bridge is built in 1990.", "en": "This bridge is built in 1990." },
+        { "vi": "This bridge has built in 1990.", "en": "This bridge has built in 1990." }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "Bị động quá khứ đơn: was/were + V3.", "en": "Past simple passive: was/were + past participle." }
+    },
+    {
+      "id": 9,
+      "category": "network",
+      "question": { "vi": "Trên Android Emulator, địa chỉ nào trỏ về localhost của máy tính?", "en": "On the Android Emulator, which address points to the host machine's localhost?" },
+      "options": [
+        { "vi": "127.0.0.1", "en": "127.0.0.1" },
+        { "vi": "10.0.2.2", "en": "10.0.2.2" },
+        { "vi": "192.168.0.1", "en": "192.168.0.1" },
+        { "vi": "0.0.0.0", "en": "0.0.0.0" }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "10.0.2.2 là alias đặc biệt của emulator tới máy host.", "en": "10.0.2.2 is the emulator's special alias to the host." }
+    },
+    {
+      "id": 10,
+      "category": "vocabulary",
+      "question": { "vi": "\"Deadline\" nghĩa là gì?", "en": "What does \"deadline\" mean?" },
+      "options": [
+        { "vi": "Đường chết", "en": "A dead road" },
+        { "vi": "Hạn chót", "en": "Final time limit" },
+        { "vi": "Bắt đầu", "en": "Beginning" },
+        { "vi": "Cuộc họp", "en": "Meeting" }
+      ],
+      "correctIndex": 1,
+      "explanation": { "vi": "Deadline = thời hạn cuối cùng phải hoàn thành.", "en": "Deadline = the latest time something must be done." }
+    }
+  ]
+}
+
