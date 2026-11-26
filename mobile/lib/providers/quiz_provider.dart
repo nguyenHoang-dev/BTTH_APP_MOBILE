@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 
 import '../core/config/app_config.dart';
 import '../core/errors/app_exception.dart';
 import '../core/logic/quiz_engine.dart';
 import '../core/state/view_state.dart';
+import '../models/exam_subject.dart';
 import '../models/question.dart';
 import '../models/quiz_result.dart';
 import '../repositories/history_repository.dart';
@@ -30,6 +33,7 @@ class QuizProvider extends ChangeNotifier {
   final int questionsPerQuiz;
 
   ViewState<List<Question>> _state = const IdleState();
+  Map<String, int> _subjectCounts = const {};
   int _currentIndex = 0;
   final Map<int, int> _answers = {};
   DateTime? _startedAt;
@@ -40,6 +44,8 @@ class QuizProvider extends ChangeNotifier {
   bool _onlyWrong = false;
 
   ViewState<List<Question>> get state => _state;
+  List<ExamSubject> get subjects => ExamSubject.defaults;
+  Map<String, int> get subjectCounts => _subjectCounts;
   List<Question> get questions => _state.dataOrNull ?? const [];
   int get currentIndex => _currentIndex;
   Question? get currentQuestion =>
@@ -53,9 +59,29 @@ class QuizProvider extends ChangeNotifier {
   /// Cảnh báo không chặn luồng (vd. lưu SQLite thất bại nhưng vẫn xem được điểm).
   String? get saveWarning => _saveWarning;
 
-  /// Nạp ngân hàng câu hỏi -> random [questionsPerQuiz] câu.
-  /// [onlyWrong] = true: chỉ lấy các câu từng làm sai (lấy từ SQLite).
-  Future<void> startQuiz({bool onlyWrong = false}) async {
+  /// Đếm trước số lượng câu hỏi của từng môn để hiển thị ở màn chọn môn.
+  Future<void> loadSubjectCounts() async {
+    try {
+      final bank = await _quizRepo.loadAllQuestions();
+      _subjectCounts = Map.unmodifiable({
+        for (final subject in subjects)
+          subject.id: bank.where(subject.matches).length,
+      });
+      notifyListeners();
+    } catch (_) {
+      // Không chặn màn hình chính; lỗi nạp câu hỏi sẽ được xử lý ở QuizScreen.
+    }
+  }
+
+  /// Nạp ngân hàng câu hỏi và khởi tạo lượt làm bài.
+  /// - [onlyWrong] = true: chỉ lấy các câu từng làm sai (lấy từ SQLite).
+  /// - [subject] != null: lọc toàn bộ câu thuộc [subject] và đảo thứ tự mỗi lần thi.
+  /// - Mặc định: random [questionsPerQuiz] câu từ toàn bộ ngân hàng.
+  Future<void> startQuiz({
+    bool onlyWrong = false,
+    ExamSubject? subject,
+    Random? random,
+  }) async {
     _state = const LoadingState();
     _resetProgress();
     _onlyWrong = onlyWrong;
@@ -68,11 +94,17 @@ class QuizProvider extends ChangeNotifier {
         bank = bank.where((q) => wrongIds.contains(q.id)).toList();
       }
 
-      final picked = _engine.pickRandom(bank, questionsPerQuiz);
+      final picked = (!onlyWrong && subject != null)
+          ? _engine.prepareSubjectExam(bank, subject, random: random)
+          : _engine.pickRandom(bank, questionsPerQuiz, random: random);
       if (picked.isEmpty) {
-        _state = EmptyState(onlyWrong
-            ? 'Bạn chưa có câu sai nào để ôn lại. Giỏi lắm! 🎉'
-            : 'Ngân hàng câu hỏi đang trống.');
+        _state = EmptyState(
+          onlyWrong
+              ? 'Bạn chưa có câu sai nào để ôn lại. Giỏi lắm! 🎉'
+              : subject != null
+                  ? 'Môn "${subject.name.vi}" hiện chưa có câu hỏi nào.'
+                  : 'Ngân hàng câu hỏi đang trống.',
+        );
       } else {
         _startedAt = _clock();
         _state = SuccessState(picked);

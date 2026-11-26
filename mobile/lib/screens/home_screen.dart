@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../core/config/app_config.dart';
 import '../core/state/view_state.dart';
+import '../models/exam_subject.dart';
 import '../models/localized_text.dart';
 import '../models/quiz_result.dart';
 import '../providers/history_provider.dart';
+import '../providers/quiz_provider.dart';
 import '../providers/settings_provider.dart';
 import 'practice_screen.dart';
 import 'quiz_screen.dart';
@@ -25,14 +27,27 @@ class _HomeScreenState extends State<HomeScreen> {
     // KHÔNG gọi dữ liệu trong build(): kích hoạt 1 lần sau frame đầu tiên.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HistoryProvider>().load();
+      context.read<QuizProvider>().loadSubjectCounts();
     });
   }
 
-  Future<void> _openQuiz({bool onlyWrong = false}) async {
+  Future<void> _openQuiz({bool onlyWrong = false, ExamSubject? subject}) async {
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => QuizScreen(onlyWrong: onlyWrong)),
+      MaterialPageRoute<void>(
+        builder: (_) => QuizScreen(onlyWrong: onlyWrong, subject: subject),
+      ),
     );
     if (mounted) context.read<HistoryProvider>().load(); // Làm mới thống kê.
+  }
+
+  Future<void> _openMockExamPicker() async {
+    final subject = await showModalBottomSheet<ExamSubject>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => const _SubjectPickerSheet(),
+    );
+    if (subject == null || !mounted) return;
+    await _openQuiz(subject: subject);
   }
 
   Future<void> _openPractice() async {
@@ -113,8 +128,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: () => _openQuiz(),
+            key: const Key('mock_exam_button'),
+            onPressed: _openMockExamPicker,
             icon: const Icon(Icons.play_arrow),
+            label: const Text('Thi thử'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('random_quiz_button'),
+            onPressed: () => _openQuiz(),
+            icon: const Icon(Icons.shuffle),
             label: Text('Thi thử ngẫu nhiên (${AppConfig.questionsPerQuiz} câu)'),
           ),
           const SizedBox(height: 8),
@@ -135,6 +158,64 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           const SizedBox(height: 320, child: _HistorySection()),
         ],
+      ),
+    );
+  }
+}
+
+class _SubjectPickerSheet extends StatelessWidget {
+  const _SubjectPickerSheet();
+
+  static IconData _iconFor(String subjectId) => switch (subjectId) {
+        'grammar' => Icons.spellcheck,
+        'vocabulary' => Icons.menu_book,
+        'flutter_network' => Icons.developer_mode,
+        _ => Icons.quiz_outlined,
+      };
+
+  static String _subtitleFor(ExamSubject subject, int? count) {
+    final categories = subject.categories.join(', ');
+    if (count == null) return 'Phạm vi: $categories';
+    return '$count câu  •  $categories';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = context.watch<SettingsProvider>().language;
+    final quiz = context.watch<QuizProvider>();
+    final counts = quiz.subjectCounts;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Chọn môn thi thử',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Chọn 1 trong 3 môn. Đề chỉ gồm câu hỏi của môn đó và đảo thứ tự mỗi lần thi.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            for (final subject in quiz.subjects)
+              Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  key: Key('subject_${subject.id}'),
+                  leading: CircleAvatar(child: Icon(_iconFor(subject.id))),
+                  title: Text(subject.name.resolve(lang)),
+                  subtitle: Text(_subtitleFor(subject, counts[subject.id])),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).pop(subject),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

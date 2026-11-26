@@ -6,9 +6,9 @@ import 'package:bilingual_quiz/repositories/history_repository.dart';
 import 'package:bilingual_quiz/repositories/quiz_repository.dart';
 
 /// Tạo câu hỏi giả: đáp án đúng luôn ở index [correct].
-Question fakeQuestion(int id, {int correct = 0}) => Question(
+Question fakeQuestion(int id, {int correct = 0, String category = 'test'}) => Question(
       id: id,
-      category: 'test',
+      category: category,
       content: LocalizedText(vi: 'Câu hỏi $id', en: 'Question $id'),
       options: const [
         LocalizedText(vi: 'A-vi', en: 'A-en'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/state/view_state.dart';
+import '../models/exam_subject.dart';
 import '../models/localized_text.dart';
 import '../providers/quiz_provider.dart';
 import '../providers/settings_provider.dart';
@@ -9,9 +10,10 @@ import 'result_screen.dart';
 import 'widgets/state_views.dart';
 
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key, this.onlyWrong = false});
+  const QuizScreen({super.key, this.onlyWrong = false, this.subject});
 
   final bool onlyWrong;
+  final ExamSubject? subject;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -24,8 +26,20 @@ class _QuizScreenState extends State<QuizScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
-  void _start() =>
-      context.read<QuizProvider>().startQuiz(onlyWrong: widget.onlyWrong);
+  void _start() => context.read<QuizProvider>().startQuiz(
+        onlyWrong: widget.onlyWrong,
+        subject: widget.subject,
+      );
+
+  String _buildTitle(AppLanguage lang) {
+    if (widget.onlyWrong) return 'Ôn câu sai';
+    final subject = widget.subject;
+    if (subject == null) return 'Làm bài';
+    final subjectName = subject.name.resolve(
+      lang == AppLanguage.both ? AppLanguage.vi : lang,
+    );
+    return 'Thi thử: $subjectName';
+  }
 
   Future<void> _submit(QuizProvider quiz) async {
     final unanswered = quiz.questions.length - quiz.answeredCount;
@@ -65,9 +79,10 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final quiz = context.watch<QuizProvider>();
+    final lang = context.select<SettingsProvider, AppLanguage>((s) => s.language);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.onlyWrong ? 'Ôn câu sai' : 'Làm bài')),
+      appBar: AppBar(title: Text(_buildTitle(lang))),
       body: switch (quiz.state) {
         IdleState() ||
         LoadingState() => const LoadingView(message: 'Đang nạp câu hỏi...'),

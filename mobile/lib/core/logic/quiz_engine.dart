@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../models/exam_subject.dart';
 import '../../models/question.dart';
 import '../../models/quiz_result.dart';
 
@@ -10,11 +11,28 @@ class QuizEngine {
 
   static const int unanswered = -1;
 
+  /// Đảo ngẫu nhiên thứ tự danh sách câu hỏi trên một bản sao mới.
+  List<Question> shuffleQuestions(List<Question> questions, {Random? random}) {
+    if (questions.isEmpty) return const [];
+    final shuffled = List<Question>.of(questions)..shuffle(random ?? Random());
+    return List<Question>.unmodifiable(shuffled);
+  }
+
+  /// Lọc câu hỏi theo [subject] và đảo thứ tự toàn bộ câu trong môn đó.
+  List<Question> prepareSubjectExam(
+    List<Question> bank,
+    ExamSubject subject, {
+    Random? random,
+  }) {
+    final filtered = bank.where(subject.matches).toList(growable: false);
+    return shuffleQuestions(filtered, random: random);
+  }
+
   /// Chọn ngẫu nhiên [count] câu không trùng lặp từ ngân hàng câu hỏi.
   List<Question> pickRandom(List<Question> bank, int count, {Random? random}) {
     if (bank.isEmpty || count <= 0) return const [];
-    final shuffled = List<Question>.of(bank)..shuffle(random ?? Random());
-    return shuffled.take(min(count, bank.length)).toList(growable: false);
+    final shuffled = shuffleQuestions(bank, random: random);
+    return shuffled.take(min(count, shuffled.length)).toList(growable: false);
   }
 
   /// Chấm điểm. [answers]: index câu hỏi -> index đáp án đã chọn.

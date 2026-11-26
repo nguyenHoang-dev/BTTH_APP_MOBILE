@@ -1,6 +1,9 @@
 import 'package:bilingual_quiz/core/errors/app_exception.dart';
+import 'package:bilingual_quiz/models/localized_text.dart';
+import 'package:bilingual_quiz/providers/history_provider.dart';
 import 'package:bilingual_quiz/providers/quiz_provider.dart';
 import 'package:bilingual_quiz/providers/settings_provider.dart';
+import 'package:bilingual_quiz/screens/home_screen.dart';
 import 'package:bilingual_quiz/screens/quiz_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +25,30 @@ Widget _buildTestApp(FakeQuizRepository quizRepo) {
       ),
     ],
     child: const MaterialApp(home: QuizScreen()),
+  );
+}
+
+/// Dựng HomeScreen với repository giả để test luồng bấm nút Thi thử -> chọn 1 trong 3 môn.
+Widget _buildHomeApp(
+  FakeQuizRepository quizRepo, {
+  AppLanguage language = AppLanguage.vi,
+}) {
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (_) => SettingsProvider(demoMode: true, language: language),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => QuizProvider(
+          quizRepository: quizRepo,
+          historyRepository: FakeHistoryRepository(),
+        ),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => HistoryProvider(historyRepository: FakeHistoryRepository()),
+      ),
+    ],
+    child: const MaterialApp(home: HomeScreen()),
   );
 }
 
@@ -98,5 +125,75 @@ void main() {
       expect(find.byKey(const Key('question_text')), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
+  });
+
+  group('Luồng Thi thử theo 3 môn', () {
+    final bank = [
+      fakeQuestion(1, category: 'grammar'),
+      fakeQuestion(5, category: 'grammar'),
+      fakeQuestion(8, category: 'grammar'),
+      fakeQuestion(2, category: 'vocabulary'),
+      fakeQuestion(6, category: 'vocabulary'),
+      fakeQuestion(3, category: 'flutter'),
+      fakeQuestion(9, category: 'network'),
+    ];
+
+    testWidgets('Bấm nút Thi thử hiện đúng 3 môn cần thi', (tester) async {
+      await tester.pumpWidget(_buildHomeApp(FakeQuizRepository(questions: bank)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Thi thử'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('mock_exam_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chọn môn thi thử'), findsOneWidget);
+      expect(find.byKey(const Key('subject_grammar')), findsOneWidget);
+      expect(find.byKey(const Key('subject_vocabulary')), findsOneWidget);
+      expect(find.byKey(const Key('subject_flutter_network')), findsOneWidget);
+      expect(find.text('3 câu  •  grammar'), findsOneWidget);
+      expect(find.text('2 câu  •  vocabulary'), findsOneWidget);
+      expect(find.text('2 câu  •  flutter, network'), findsOneWidget);
+    });
+
+    testWidgets('Chọn môn Từ vựng chỉ thi các câu vocabulary', (tester) async {
+      await tester.pumpWidget(_buildHomeApp(FakeQuizRepository(questions: bank)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('mock_exam_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('subject_vocabulary')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Thi thử: Từ vựng'), findsOneWidget);
+      expect(find.text('Câu 1/2  •  vocabulary'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('next_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Câu 2/2  •  vocabulary'), findsOneWidget);
+      expect(find.byKey(const Key('submit_button')), findsOneWidget);
+    });
+
+    testWidgets('Chọn môn Flutter & Mạng chỉ thi các câu flutter và network', (tester) async {
+      await tester.pumpWidget(_buildHomeApp(FakeQuizRepository(questions: bank)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('mock_exam_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('subject_flutter_network')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Thi thử: Flutter & Mạng'), findsOneWidget);
+
+      final firstMeta = tester.widget<Text>(find.textContaining('Câu 1/2')).data!;
+      expect(firstMeta == 'Câu 1/2  •  flutter' || firstMeta == 'Câu 1/2  •  network', isTrue);
+
+      await tester.tap(find.byKey(const Key('next_button')));
+      await tester.pumpAndSettle();
+
+      final secondMeta = tester.widget<Text>(find.textContaining('Câu 2/2')).data!;
+      expect(secondMeta == 'Câu 2/2  •  flutter' || secondMeta == 'Câu 2/2  •  network', isTrue);
+      expect(secondMeta, isNot(equals(firstMeta)));
+    });
   });
 }
