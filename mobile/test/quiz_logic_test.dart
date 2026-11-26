@@ -85,17 +85,14 @@ void main() {
       expect(first.map((q) => q.id).toList(), isNot(equals(second.map((q) => q.id).toList())));
     });
 
-    test('AssetQuizRepository map đủ câu hỏi thuộc các category vào 3 môn', () async {
+    test('AssetQuizRepository map đủ 300/300 câu (20 khối kiến thức) vào 3 môn', () async {
       final questions = await AssetQuizRepository().loadAllQuestions();
       final totalMapped = ExamSubject.defaults
           .map((s) => engine.prepareSubjectExam(questions, s).length)
           .reduce((a, b) => a + b);
-      final expectedMapped = questions
-          .where((q) => ExamSubject.defaults.any((s) => s.matches(q)))
-          .length;
 
-      expect(questions, isNotEmpty);
-      expect(totalMapped, expectedMapped);
+      expect(questions, hasLength(300));
+      expect(totalMapped, 300);
     });
   });
 

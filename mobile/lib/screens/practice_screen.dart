@@ -226,6 +226,26 @@ class _PracticeBody extends StatelessWidget {
     'flutter': 'Flutter',
     'network': 'Network & API',
     'dart': 'Dart',
+    'khối 1. ngôn ngữ dart': 'Block 1. Dart Language',
+    'khối 2. môi trường và công cụ': 'Block 2. Environment & Tools',
+    'khối 3. cách flutter hoạt động': 'Block 3. How Flutter Works',
+    'khối 4. bố cục và cuộn': 'Block 4. Layout & Scrolling',
+    'khối 5. thiết kế và giao diện chung': 'Block 5. Design & Theming',
+    'khối 6. thích ứng và co giãn': 'Block 6. Adaptive & Responsive',
+    'khối 7. tương tác và biểu mẫu': 'Block 7. Interaction & Forms',
+    'khối 8. tài nguyên và đa phương tiện': 'Block 8. Assets & Media',
+    'khối 9. điều hướng': 'Block 9. Navigation',
+    'khối 10. hoạt ảnh': 'Block 10. Animations',
+    'khối 11. trợ năng và đa ngôn ngữ': 'Block 11. Accessibility & i18n',
+    'khối 12. quản lý trạng thái': 'Block 12. State Management',
+    'khối 13. dữ liệu và backend': 'Block 13. Data & Backend',
+    'khối 14. kiến trúc ứng dụng': 'Block 14. App Architecture',
+    'khối 15. gói và plugin': 'Block 15. Packages & Plugins',
+    'khối 16. kiểm thử và gỡ lỗi': 'Block 16. Testing & Debugging',
+    'khối 17. hiệu năng': 'Block 17. Performance',
+    'khối 18. tích hợp nền tảng và mã gốc': 'Block 18. Platform Integration',
+    'khối 19. triển khai': 'Block 19. Deployment',
+    'khối 20. ai trong flutter': 'Block 20. AI in Flutter',
   };
 
   String _getCategoryLabel(String catKey) {
@@ -516,6 +536,7 @@ class _PracticeBody extends StatelessWidget {
               ),
               const Spacer(),
               TextButton.icon(
+                key: const Key('retry_button'),
                 onPressed: practice.retryCurrent,
                 icon: const Icon(Icons.refresh, size: 16),
                 label: const Text('Thử lại'),
@@ -523,6 +544,53 @@ class _PracticeBody extends StatelessWidget {
               ),
             ],
           ),
+          if (!isCorrect) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.green.shade300, width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: switch (lang) {
+                              AppLanguage.vi => 'Đáp án đúng: ',
+                              AppLanguage.en => 'Correct answer: ',
+                              AppLanguage.both => 'Đáp án đúng • Correct: ',
+                            },
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          TextSpan(
+                            text: question.correctOption.resolve(lang),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (explanation != null && explanation.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(

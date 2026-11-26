@@ -322,7 +322,7 @@ class _HeroBanner extends StatelessWidget {
               ),
               const _HeroBadge(
                 icon: Icons.category_rounded,
-                label: '5 chuyên đề',
+                label: '20 khối kiến thức',
               ),
               _HeroBadge(
                 icon: Icons.history_edu_rounded,
@@ -426,11 +426,14 @@ class _QuickCategoryStrip extends StatelessWidget {
   final ValueChanged<String?> onSelectCategory;
 
   static const List<({String id, String label, IconData icon, Color color})> _items = [
-    (id: 'grammar', label: 'Ngữ pháp', icon: Icons.spellcheck_rounded, color: Color(0xFF4F46E5)),
-    (id: 'vocabulary', label: 'Từ vựng', icon: Icons.menu_book_rounded, color: Color(0xFF0D9488)),
-    (id: 'flutter', label: 'Flutter', icon: Icons.widgets_rounded, color: Color(0xFF0284C7)),
-    (id: 'network', label: 'Mạng & API', icon: Icons.cloud_sync_rounded, color: Color(0xFF7C3AED)),
-    (id: 'dart', label: 'Dart', icon: Icons.code_rounded, color: Color(0xFFD97706)),
+    (id: 'Khối 1. Ngôn ngữ Dart', label: 'Khối 1. Dart', icon: Icons.code_rounded, color: Color(0xFFD97706)),
+    (id: 'Khối 3. Cách Flutter hoạt động', label: 'Khối 3. Flutter Core', icon: Icons.widgets_rounded, color: Color(0xFF0284C7)),
+    (id: 'Khối 4. Bố cục và cuộn', label: 'Khối 4. Bố cục', icon: Icons.dashboard_customize_rounded, color: Color(0xFF4F46E5)),
+    (id: 'Khối 9. Điều hướng', label: 'Khối 9. Điều hướng', icon: Icons.alt_route_rounded, color: Color(0xFF0D9488)),
+    (id: 'Khối 12. Quản lý trạng thái', label: 'Khối 12. State', icon: Icons.sync_alt_rounded, color: Color(0xFF7C3AED)),
+    (id: 'Khối 13. Dữ liệu và backend', label: 'Khối 13. Backend', icon: Icons.cloud_sync_rounded, color: Color(0xFF2563EB)),
+    (id: 'Khối 16. Kiểm thử và gỡ lỗi', label: 'Khối 16. Kiểm thử', icon: Icons.fact_check_rounded, color: Color(0xFF16A34A)),
+    (id: 'Khối 20. AI trong Flutter', label: 'Khối 20. AI Flutter', icon: Icons.auto_awesome_rounded, color: Color(0xFFDB2777)),
   ];
 
   @override
@@ -585,7 +588,24 @@ class _SubjectPickerSheet extends StatelessWidget {
                       subject.name.resolve(lang),
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    subtitle: Text(_subtitleFor(subject, counts[subject.id])),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_subtitleFor(subject, counts[subject.id])),
+                        if (subject.blockSummary.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              subject.blockSummary,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: _colorFor(subject.id),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     trailing: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(

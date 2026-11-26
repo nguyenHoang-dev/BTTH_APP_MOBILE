@@ -10,7 +10,33 @@ const path = require('path');
 
 const QUESTIONS_PATH = path.resolve(__dirname, '../../mobile/assets/data/questions.json');
 const REQUIRED_TOTAL = 300;
-const VALID_CATEGORIES = ['grammar', 'vocabulary', 'flutter', 'network', 'dart'];
+const VALID_CATEGORIES = [
+  'grammar',
+  'vocabulary',
+  'flutter',
+  'network',
+  'dart',
+  'Khối 1. Ngôn ngữ Dart',
+  'Khối 2. Môi trường và công cụ',
+  'Khối 3. Cách Flutter hoạt động',
+  'Khối 4. Bố cục và cuộn',
+  'Khối 5. Thiết kế và giao diện chung',
+  'Khối 6. Thích ứng và co giãn',
+  'Khối 7. Tương tác và biểu mẫu',
+  'Khối 8. Tài nguyên và đa phương tiện',
+  'Khối 9. Điều hướng',
+  'Khối 10. Hoạt ảnh',
+  'Khối 11. Trợ năng và đa ngôn ngữ',
+  'Khối 12. Quản lý trạng thái',
+  'Khối 13. Dữ liệu và backend',
+  'Khối 14. Kiến trúc ứng dụng',
+  'Khối 15. Gói và plugin',
+  'Khối 16. Kiểm thử và gỡ lỗi',
+  'Khối 17. Hiệu năng',
+  'Khối 18. Tích hợp nền tảng và mã gốc',
+  'Khối 19. Triển khai',
+  'Khối 20. AI trong Flutter',
+];
 const OPTIONS_PER_QUESTION = 4;
 
 // ─── Màu terminal ──────────────────────────────────────────────────────────────
@@ -102,12 +128,14 @@ for (let i = 0; i < questions.length; i++) {
     errors.push(`${prefix} correctIndex=${q.correctIndex} không hợp lệ (phải 0–${maxIdx}).`);
   }
 
-  // explanation
-  if (!q.explanation || typeof q.explanation.vi !== 'string' || q.explanation.vi.trim() === '') {
-    errors.push(`${prefix} Thiếu hoặc rỗng "explanation.vi".`);
-  }
-  if (!q.explanation || typeof q.explanation.en !== 'string' || q.explanation.en.trim() === '') {
-    errors.push(`${prefix} Thiếu hoặc rỗng "explanation.en".`);
+  // explanation (tùy chọn ở version 2)
+  if (q.explanation != null) {
+    if (typeof q.explanation.vi !== 'string' || q.explanation.vi.trim() === '') {
+      errors.push(`${prefix} Rỗng "explanation.vi".`);
+    }
+    if (typeof q.explanation.en !== 'string' || q.explanation.en.trim() === '') {
+      errors.push(`${prefix} Rỗng "explanation.en".`);
+    }
   }
 }
 
