@@ -156,6 +156,33 @@ New-NetFirewallRule -DisplayName "Flutter Demo Server TCP 8080" -Direction Inbou
 ```
 Nhấn `Ctrl+C` trong cửa sổ server để dừng chia sẻ. Bản web lưu lịch sử trong bộ nhớ trình duyệt; dữ liệu lịch sử sẽ mất khi tải lại trang.
 
+#### Cách B2: Cài đặt ứng dụng iOS Native (`.ipa`) lên iPhone thật từ Windows bằng `xtool` (Kịch bản 1)
+Dự án đã tích hợp sẵn workflow [`.github/workflows/ios_ipa.yml`](.github/workflows/ios_ipa.yml) tự động build file **`BilingualQuiz-unsigned.ipa`** (100% Native iOS + SQLite `sqflite`) trên máy chủ `macos-latest` của GitHub Actions mỗi khi push lên `dev`.
+
+1. **Tải file `.ipa` từ GitHub Actions:**
+   - Mở tab **Actions** trên GitHub repo $\rightarrow$ chọn workflow **🍎 Build iOS IPA (Unsigned for xtool / Sideload)** $\rightarrow$ tải gói artifact **`BilingualQuiz-unsigned-ipa`** và giải nén lấy file `BilingualQuiz-unsigned.ipa`.
+2. **Chuẩn bị kết nối USB từ Windows vào WSL2 (`Ubuntu-24.04`):**
+   - Trên Windows PowerShell (Admin), cài `usbipd-win` và chuyển tiếp cổng USB của iPhone vào WSL2:
+     ```powershell
+     winget install --interactive --exact dorssel.usbipd-win
+     usbipd list
+     # Thay <BUSID> bằng Bus ID của Apple Mobile Device (iPhone):
+     usbipd bind --busid <BUSID>
+     usbipd attach --wsl --busid <BUSID>
+     ```
+3. **Ký chứng chỉ Apple ID và đẩy app lên iPhone trong WSL2 (`Ubuntu-24.04`) bằng `xtool`:**
+   ```bash
+   # Khởi chạy dịch vụ kết nối iPhone trong WSL2:
+   sudo usbmuxd
+   # Đăng nhập Apple ID miễn phí (chỉ cần làm lần đầu):
+   xtool auth login
+   # Kiểm tra iPhone đã nhận kết nối USB:
+   xtool devices
+   # Tự động ký (code-sign) và cài đặt trực tiếp file .ipa lên iPhone:
+   xtool install ./BilingualQuiz-unsigned.ipa
+   ```
+   *(Sau khi cài xong lần đầu, trên iPhone vào **Cài đặt ▸ Cài đặt chung ▸ Quản lý VPN & Thiết bị** để bấm **Tin cậy (Trust)** tài khoản Apple ID của bạn, và bật **Developer Mode / Chế độ nhà phát triển** trong **Quyền riêng tư & Bảo mật**).*
+
 #### Cách C: Chạy trên Điện thoại Android thật (cùng mạng Wi-Fi với máy tính)
 Lấy địa chỉ IPv4 LAN của máy tính (gõ `ipconfig` trong PowerShell, ví dụ `192.168.1.10`) và truyền qua `--dart-define`:
 ```powershell

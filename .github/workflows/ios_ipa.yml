@@ -1,0 +1,58 @@
+name: 🍎 Build iOS IPA (Unsigned for xtool / Sideload)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "URL máy chủ AI Backend (để trống nếu dùng mặc định / Demo Mode)"
+        required: false
+        default: ""
+  push:
+    branches: [ dev, main ]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/ios_ipa.yml"
+
+jobs:
+  build-ios-ipa:
+    name: 🍎 Build Unsigned iOS IPA on macOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build iOS Release (.app without code signing)
+        run: |
+          if [ -n "${{ github.event.inputs.api_base_url }}" ]; then
+            flutter build ios --release --no-codesign --dart-define=API_BASE_URL=${{ github.event.inputs.api_base_url }}
+          else
+            flutter build ios --release --no-codesign
+          fi
+
+      - name: Package Runner.app into BilingualQuiz-unsigned.ipa
+        run: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -qr BilingualQuiz-unsigned.ipa Payload
+          ls -lh BilingualQuiz-unsigned.ipa
+
+      - name: Upload BilingualQuiz-unsigned.ipa Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BilingualQuiz-unsigned-ipa
+          path: mobile/build/ios/iphoneos/BilingualQuiz-unsigned.ipa
+          retention-days: 14
