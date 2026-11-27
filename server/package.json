@@ -8,7 +8,6 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate_questions.js",
-    "test:backend": "node test_suite.js",
     "test": "node --test test/server.test.js"
   },
   "engines": {
