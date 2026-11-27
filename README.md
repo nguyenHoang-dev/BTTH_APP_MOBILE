@@ -93,7 +93,25 @@ flutter pub get
 
 ## 4. Cách chạy dự án
 
-Mở **2 cửa sổ Terminal** song song (hoặc dùng tính năng **Run and Debug (`Ctrl + Shift + D`)** trong VS Code / Antigravity):
+### ⚡ Chạy nhanh trọn gói bằng 1 dòng lệnh (PowerShell trên Windows / Orca)
+Tại thư mục gốc của dự án (`BTL_APP`), dán lệnh 1 dòng dưới đây vào Terminal để **tự động bật Server AI (cổng 3000) + Mở máy ảo Pixel 7 + Build & Chạy ứng dụng Flutter**:
+
+```powershell
+$env:ANDROID_SDK_ROOT="F:\Android_SDK"; $env:ANDROID_HOME="F:\Android_SDK"; if (-not (Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue)) { Start-Process node -ArgumentList "src/server.js" -WorkingDirectory "$PWD\server" -WindowStyle Hidden }; orca emulator attach Pixel_7 --focus; cd mobile; flutter run -d emulator-5554
+```
+
+* **Chỉ bật và hiển thị màn hình máy ảo Pixel 7 trong khung Emulator của Orca:**
+  ```powershell
+  orca emulator attach Pixel_7 --focus
+  ```
+* **Chỉ chạy lại app Flutter khi máy ảo đã mở sẵn:**
+  ```powershell
+  cd mobile; flutter run -d emulator-5554
+  ```
+
+---
+
+Hoặc mở **2 cửa sổ Terminal** song song (hoặc dùng tính năng **Run and Debug (`Ctrl + Shift + D`)** trong VS Code / Antigravity):
 
 ### Terminal 1 – Chạy Server Node.js (Port 3000)
 ```powershell
