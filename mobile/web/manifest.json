@@ -1,11 +1,11 @@
 {
-    "name": "bilingual_quiz",
-    "short_name": "bilingual_quiz",
+    "name": "Ôn tập trắc nghiệm song ngữ",
+    "short_name": "Ôn tập song ngữ",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F1F5F9",
+    "theme_color": "#4338CA",
+    "description": "Hệ thống Ôn tập trắc nghiệm song ngữ Việt - Anh (300 câu / 20 khối kiến thức) tích hợp Gia sư AI.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
