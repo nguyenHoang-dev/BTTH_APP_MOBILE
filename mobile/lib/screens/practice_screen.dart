@@ -8,6 +8,7 @@ import '../models/quiz_result.dart';
 import '../providers/practice_provider.dart';
 import '../providers/settings_provider.dart';
 import 'ai_explanation_dialog.dart';
+import 'qr_question_screen.dart';
 import 'widgets/state_views.dart';
 
 /// Màn hình Chế độ Luyện tập (Practice Mode).
@@ -366,11 +367,34 @@ class _PracticeBody extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            '#${q.id}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w600,
+                          InkWell(
+                            key: const Key('practice_qr_share_button'),
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () => QrQuestionScreen.showShareSheet(context, q),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.qr_code_2_rounded,
+                                    size: 14,
+                                    color: colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '#${q.id}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],

@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Bắt buộc để gọi server Node.js (bản release không tự có quyền này). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Quyền Camera để quét mã QR thêm câu hỏi trắc nghiệm vào ngân hàng ôn tập. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:usesCleartextTraffic="true"
         android:label="Ôn tập song ngữ"

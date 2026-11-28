@@ -10,6 +10,7 @@ import '../providers/history_provider.dart';
 import '../providers/quiz_provider.dart';
 import '../providers/settings_provider.dart';
 import 'practice_screen.dart';
+import 'qr_question_screen.dart';
 import 'quiz_screen.dart';
 import 'widgets/state_views.dart';
 
@@ -58,6 +59,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (mounted) context.read<HistoryProvider>().load();
+  }
+
+  Future<void> _openQrScreen({int initialTabIndex = 0}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => QrQuestionScreen(initialTabIndex: initialTabIndex),
+      ),
+    );
+    if (!mounted) return;
+    context.read<HistoryProvider>().load();
+    context.read<QuizProvider>().loadSubjectCounts();
   }
 
   /// Hỏi xác nhận bằng AlertDialog rồi mới xóa (an toàn dữ liệu).
@@ -240,10 +252,28 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.replay_rounded),
             label: Text('Ôn lại các câu đã làm sai (${history.wrongCount})'),
           ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('home_qr_button'),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFEEF2FF),
+              foregroundColor: const Color(0xFF4338CA),
+              side: const BorderSide(color: Color(0xFF818CF8), width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onPressed: () => _openQrScreen(),
+            icon: const Icon(Icons.qr_code_scanner_rounded),
+            label: const Text('Quét & Chia sẻ mã QR câu hỏi trắc nghiệm'),
+          ),
           const SizedBox(height: 14),
           _QuickCategoryStrip(onSelectCategory: (cat) => _openPractice(initialCategory: cat)),
           const SizedBox(height: 20),
           if (history.categoryStats.isNotEmpty) ...[
+            _AdaptiveStudyPlanCard(
+              stats: history.categoryStats,
+              onPracticeCategory: (cat) => _openPractice(initialCategory: cat),
+            ),
+            const SizedBox(height: 18),
             _SectionHeader(
               icon: Icons.pie_chart_outline_rounded,
               title: 'Tỷ lệ đúng theo khối kiến thức',
@@ -954,6 +984,219 @@ class _Stat extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Thẻ Biểu đồ phân bố năng lực & Gợi ý lộ trình ôn tập khắc phục điểm yếu (Adaptive Study Plan).
+class _AdaptiveStudyPlanCard extends StatelessWidget {
+  const _AdaptiveStudyPlanCard({
+    required this.stats,
+    required this.onPracticeCategory,
+  });
+
+  final List<CategoryStat> stats;
+  final ValueChanged<String> onPracticeCategory;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    var strongCount = 0;
+    var mediumCount = 0;
+    var weakCount = 0;
+    for (final s in stats) {
+      if (s.accuracy >= 0.8) {
+        strongCount++;
+      } else if (s.accuracy >= 0.5) {
+        mediumCount++;
+      } else {
+        weakCount++;
+      }
+    }
+
+    final sortedByWeakest = [...stats]
+      ..sort((a, b) => a.accuracy.compareTo(b.accuracy));
+    final weakestList = sortedByWeakest
+        .where((s) => s.accuracy < 0.75)
+        .take(3)
+        .toList(growable: false);
+    final topTarget =
+        weakestList.isNotEmpty ? weakestList.first : sortedByWeakest.first;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.auto_graph_rounded,
+                    color: colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Biểu đồ năng lực & Lộ trình ôn tập AI',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Phân tích ${stats.length} khối kiến thức đã làm bài',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 12,
+                child: Row(
+                  children: [
+                    if (strongCount > 0)
+                      Expanded(
+                        flex: strongCount,
+                        child: Container(color: const Color(0xFF16A34A)),
+                      ),
+                    if (mediumCount > 0)
+                      Expanded(
+                        flex: mediumCount,
+                        child: Container(color: const Color(0xFFD97706)),
+                      ),
+                    if (weakCount > 0)
+                      Expanded(
+                        flex: weakCount,
+                        child: Container(color: const Color(0xFFDC2626)),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                _LegendDot(
+                  color: const Color(0xFF16A34A),
+                  label: 'Vững (≥80%): $strongCount khối',
+                ),
+                _LegendDot(
+                  color: const Color(0xFFD97706),
+                  label: 'Khá (50-79%): $mediumCount khối',
+                ),
+                _LegendDot(
+                  color: const Color(0xFFDC2626),
+                  label: 'Cần ôn (<50%): $weakCount khối',
+                ),
+              ],
+            ),
+            const Divider(height: 22),
+            if (weakestList.isNotEmpty) ...[
+              Text(
+                'Thứ tự ưu tiên cần củng cố:',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFFB45309),
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (var i = 0; i < weakestList.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${i + 1}. ',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          weakestList[i].category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${(weakestList[i].accuracy * 100).round()}% (${weakestList[i].correct}/${weakestList[i].total})',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFDC2626),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 8),
+            ],
+            FilledButton.tonalIcon(
+              key: const Key('adaptive_study_button'),
+              onPressed: () => onPracticeCategory(topTarget.category),
+              icon: const Icon(Icons.bolt_rounded, size: 18),
+              label: Text(
+                'Ôn tập khắc phục ngay: ${topTarget.category}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
         ),
       ],
     );

@@ -34,6 +34,8 @@ class QuizProvider extends ChangeNotifier {
 
   ViewState<List<Question>> _state = const IdleState();
   Map<String, int> _subjectCounts = const {};
+  int _totalBankCount = 300;
+  List<Question> _customQuestions = const [];
   int _currentIndex = 0;
   final Map<int, int> _answers = {};
   DateTime? _startedAt;
@@ -46,6 +48,8 @@ class QuizProvider extends ChangeNotifier {
   ViewState<List<Question>> get state => _state;
   List<ExamSubject> get subjects => ExamSubject.defaults;
   Map<String, int> get subjectCounts => _subjectCounts;
+  int get totalBankCount => _totalBankCount;
+  List<Question> get customQuestions => _customQuestions;
   List<Question> get questions => _state.dataOrNull ?? const [];
   int get currentIndex => _currentIndex;
   Question? get currentQuestion =>
@@ -65,6 +69,9 @@ class QuizProvider extends ChangeNotifier {
   Future<void> loadSubjectCounts() async {
     try {
       final bank = await _quizRepo.loadAllQuestions();
+      final custom = await _quizRepo.loadCustomQuestions();
+      _totalBankCount = bank.length;
+      _customQuestions = List.unmodifiable(custom);
       _subjectCounts = Map.unmodifiable({
         for (final subject in subjects)
           subject.id: bank.where(subject.matches).length,
@@ -74,6 +81,16 @@ class QuizProvider extends ChangeNotifier {
       // Không chặn màn hình chính; lỗi nạp câu hỏi sẽ được xử lý ở QuizScreen.
     }
   }
+
+  /// Lưu thêm câu hỏi từ mã QR hoặc tự biên soạn vào ngân hàng SQLite.
+  Future<Question> addCustomQuestion(Question question) async {
+    final saved = await _quizRepo.addCustomQuestion(question);
+    await loadSubjectCounts();
+    return saved;
+  }
+
+  /// Lấy toàn bộ ngân hàng câu hỏi để chọn chia sẻ mã QR.
+  Future<List<Question>> loadAllBankQuestions() => _quizRepo.loadAllQuestions();
 
   /// Nạp ngân hàng câu hỏi và khởi tạo lượt làm bài.
   /// - [onlyWrong] = true: chỉ lấy các câu từng làm sai (lấy từ SQLite).

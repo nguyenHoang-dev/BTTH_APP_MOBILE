@@ -6,6 +6,7 @@ import '../models/exam_subject.dart';
 import '../models/localized_text.dart';
 import '../providers/quiz_provider.dart';
 import '../providers/settings_provider.dart';
+import 'qr_question_screen.dart';
 import 'result_screen.dart';
 import 'widgets/state_views.dart';
 
@@ -84,6 +85,10 @@ class _QuizScreenState extends State<QuizScreen> {
       if (ok != true) return;
     }
 
+    await _gradeAndNavigateToResult(quiz);
+  }
+
+  Future<void> _gradeAndNavigateToResult(QuizProvider quiz) async {
     final result = await quiz.submit();
     if (!mounted) return;
     final warning = quiz.saveWarning;
@@ -96,67 +101,123 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
+  /// Cảnh báo thoát khi đang thi thử (PopScope - Mục 1.1 Kế hoạch nâng cấp 8.8).
+  Future<void> _confirmExitDuringExam(QuizProvider quiz) async {
+    final exitAndSubmit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: Theme.of(ctx).colorScheme.error,
+          size: 38,
+        ),
+        title: const Text('Cảnh báo thoát bài thi'),
+        content: const Text(
+          'Bạn đang trong giờ thi thử. Nếu thoát ngay bây giờ, bài thi sẽ kết thúc '
+          'và tự động chấm điểm dựa trên số câu đã làm. Bạn có chắc chắn muốn thoát?',
+        ),
+        actions: [
+          TextButton(
+            key: const Key('stay_in_quiz_button'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Ở lại làm tiếp'),
+          ),
+          FilledButton(
+            key: const Key('exit_and_submit_button'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát & Nộp bài'),
+          ),
+        ],
+      ),
+    );
+    if (exitAndSubmit == true && mounted) {
+      await _gradeAndNavigateToResult(quiz);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final quiz = context.watch<QuizProvider>();
     final settings = context.watch<SettingsProvider>();
     final lang = settings.language;
+    final isExamActive = quiz.state is SuccessState && !quiz.isSubmitting;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_buildTitle(lang)),
-        actions: [
-          if (quiz.questions.isNotEmpty)
-            IconButton(
-              key: const Key('quiz_palette_button'),
-              tooltip: 'Bảng câu hỏi',
-              icon: const Icon(Icons.grid_view_rounded),
-              onPressed: () => _openQuestionPalette(quiz),
-            ),
-          PopupMenuButton<AppLanguage>(
-            tooltip: 'Đổi ngôn ngữ',
-            icon: const Icon(Icons.language_rounded),
-            initialValue: lang,
-            onSelected: settings.setLanguage,
-            itemBuilder: (_) => [
-              for (final l in AppLanguage.values)
-                PopupMenuItem(
-                  value: l,
-                  child: Row(
-                    children: [
-                      if (l == lang)
-                        const Icon(Icons.check, size: 18, color: Colors.green)
-                      else
-                        const SizedBox(width: 18),
-                      const SizedBox(width: 8),
-                      Text(l.label),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-      body: switch (quiz.state) {
-        IdleState() ||
-        LoadingState() => const LoadingView(message: 'Đang nạp câu hỏi...'),
-        ErrorState(:final message) => ErrorView(
-          message: message,
-          onRetry: _start,
-        ),
-        EmptyState(:final message) => EmptyView(
-          message: message,
-          action: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Quay lại'),
-          ),
-        ),
-        SuccessState() => _QuizBody(
-          quiz: quiz,
-          onSubmit: () => _submit(quiz),
-          onOpenPalette: () => _openQuestionPalette(quiz),
-        ),
+    return PopScope(
+      canPop: !isExamActive,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _confirmExitDuringExam(quiz);
       },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_buildTitle(lang)),
+          actions: [
+            if (quiz.currentQuestion != null)
+              IconButton(
+                key: const Key('quiz_qr_share_button'),
+                tooltip: 'Tạo mã QR chia sẻ câu hỏi',
+                icon: const Icon(Icons.qr_code_2_rounded),
+                onPressed: () => QrQuestionScreen.showShareSheet(
+                  context,
+                  quiz.currentQuestion!,
+                ),
+              ),
+            if (quiz.questions.isNotEmpty)
+              IconButton(
+                key: const Key('quiz_palette_button'),
+                tooltip: 'Bảng câu hỏi',
+                icon: const Icon(Icons.grid_view_rounded),
+                onPressed: () => _openQuestionPalette(quiz),
+              ),
+            PopupMenuButton<AppLanguage>(
+              tooltip: 'Đổi ngôn ngữ',
+              icon: const Icon(Icons.language_rounded),
+              initialValue: lang,
+              onSelected: settings.setLanguage,
+              itemBuilder: (_) => [
+                for (final l in AppLanguage.values)
+                  PopupMenuItem(
+                    value: l,
+                    child: Row(
+                      children: [
+                        if (l == lang)
+                          const Icon(Icons.check, size: 18, color: Colors.green)
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 8),
+                        Text(l.label),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        body: switch (quiz.state) {
+          IdleState() ||
+          LoadingState() => const LoadingView(message: 'Đang nạp câu hỏi...'),
+          ErrorState(:final message) => ErrorView(
+            message: message,
+            onRetry: _start,
+          ),
+          EmptyState(:final message) => EmptyView(
+            message: message,
+            action: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Quay lại'),
+            ),
+          ),
+          SuccessState() => _QuizBody(
+            quiz: quiz,
+            onSubmit: () => _submit(quiz),
+            onOpenPalette: () => _openQuestionPalette(quiz),
+          ),
+        },
+      ),
     );
   }
 }

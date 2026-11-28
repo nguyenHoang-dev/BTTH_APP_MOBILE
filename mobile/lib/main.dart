@@ -22,13 +22,14 @@ Future<void> main() async {
   final apiClient = ApiClient(baseUrl: baseUrl);
 
   // Trên Android/iOS dùng SQLite (sqflite); trên Web dùng InMemoryHistoryRepository.
-  final HistoryRepository historyRepo = kIsWeb
+  final localDb = kIsWeb ? null : LocalDatabase();
+  final HistoryRepository historyRepo = localDb == null
       ? InMemoryHistoryRepository()
-      : SqfliteHistoryRepository(LocalDatabase());
+      : SqfliteHistoryRepository(localDb);
 
   final deps = AppDependencies(
     settings: settings,
-    quizRepository: AssetQuizRepository(),
+    quizRepository: AssetQuizRepository(localDatabase: localDb),
     historyRepository: historyRepo,
     aiRepository: AIRepositoryImpl(
       apiClient: apiClient,

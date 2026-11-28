@@ -4,6 +4,7 @@ import 'package:bilingual_quiz/providers/history_provider.dart';
 import 'package:bilingual_quiz/providers/quiz_provider.dart';
 import 'package:bilingual_quiz/providers/settings_provider.dart';
 import 'package:bilingual_quiz/screens/home_screen.dart';
+import 'package:bilingual_quiz/screens/qr_question_screen.dart';
 import 'package:bilingual_quiz/screens/quiz_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -194,6 +195,55 @@ void main() {
       final secondMeta = tester.widget<Text>(find.textContaining('Câu 2/2')).data!;
       expect(secondMeta == 'Câu 2/2  •  flutter' || secondMeta == 'Câu 2/2  •  network', isTrue);
       expect(secondMeta, isNot(equals(firstMeta)));
+    });
+
+    testWidgets('PopScope chặn nút Back khi đang thi thử: Ở lại hoặc Thoát & Nộp bài', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildHomeApp(FakeQuizRepository(questions: bank)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('mock_exam_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('subject_vocabulary')));
+      await tester.pumpAndSettle();
+
+      // Chọn 1 đáp án rồi bấm Back trên AppBar
+      await tester.tap(find.byKey(const Key('option_0')));
+      await tester.pumpAndSettle();
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cảnh báo thoát bài thi'), findsOneWidget);
+      expect(find.byKey(const Key('stay_in_quiz_button')), findsOneWidget);
+      expect(find.byKey(const Key('exit_and_submit_button')), findsOneWidget);
+
+      // Chọn "Ở lại làm tiếp" -> đóng dialog, vẫn ở màn thi thử
+      await tester.tap(find.byKey(const Key('stay_in_quiz_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Cảnh báo thoát bài thi'), findsNothing);
+      expect(find.text('Thi thử: Từ vựng'), findsOneWidget);
+
+      // Bấm Back lần nữa -> chọn "Thoát & Nộp bài" -> chuyển thẳng sang màn Kết quả
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('exit_and_submit_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kết quả'), findsOneWidget);
+    });
+
+    test('QrQuestionCodec mã hóa và giải mã câu hỏi song ngữ chính xác', () {
+      final sample = QrQuestionCodec.sampleQrQuestion();
+      final encoded = QrQuestionCodec.encode(sample);
+      final decoded = QrQuestionCodec.decode(encoded);
+
+      expect(decoded.category, equals(sample.category));
+      expect(decoded.content.vi, equals(sample.content.vi));
+      expect(decoded.content.en, equals(sample.content.en));
+      expect(decoded.options.length, equals(4));
+      expect(decoded.correctIndex, equals(sample.correctIndex));
     });
   });
 }

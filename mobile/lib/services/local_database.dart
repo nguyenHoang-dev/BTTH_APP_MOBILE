@@ -9,11 +9,13 @@ class LocalDatabase {
   final String fileName;
   /// v1: quiz_results, wrong_answers.
   /// v2: thêm bảng category_stats (thống kê đúng/tổng theo khối kiến thức).
-  static const int _version = 2;
+  /// v3: thêm bảng custom_questions (câu hỏi thêm từ quét mã QR / tự biên soạn).
+  static const int _version = 3;
 
   static const String tableResults = 'quiz_results';
   static const String tableWrongAnswers = 'wrong_answers';
   static const String tableCategoryStats = 'category_stats';
+  static const String tableCustomQuestions = 'custom_questions';
 
   Database? _db;
 
@@ -56,12 +58,16 @@ class LocalDatabase {
       'CREATE INDEX idx_wrong_question ON $tableWrongAnswers(question_id)',
     );
     await _createCategoryStats(db);
+    await _createCustomQuestions(db);
   }
 
-  /// Máy đã cài bản v1: chỉ tạo thêm bảng mới, KHÔNG xóa dữ liệu cũ.
+  /// Máy đã cài bản cũ: chỉ tạo thêm bảng mới, KHÔNG xóa dữ liệu cũ.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createCategoryStats(db);
+    }
+    if (oldVersion < 3) {
+      await _createCustomQuestions(db);
     }
   }
 
@@ -72,6 +78,17 @@ class LocalDatabase {
         category      TEXT    PRIMARY KEY,
         correct_count INTEGER NOT NULL DEFAULT 0,
         total_count   INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+  }
+
+  /// Lưu các câu hỏi người dùng quét từ mã QR hoặc tự tạo thêm.
+  Future<void> _createCustomQuestions(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableCustomQuestions (
+        id           INTEGER PRIMARY KEY,
+        payload_json TEXT    NOT NULL,
+        created_at   TEXT    NOT NULL
       )
     ''');
   }
