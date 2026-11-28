@@ -8,6 +8,7 @@ import 'providers/practice_provider.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 class BilingualQuizApp extends StatelessWidget {
   const BilingualQuizApp({super.key, required this.dependencies});
@@ -111,11 +112,13 @@ class BilingualQuizApp extends StatelessWidget {
           create: (_) => AIProvider(aiRepository: d.aiRepository),
         ),
       ],
-      child: MaterialApp(
-        title: 'Ôn tập trắc nghiệm song ngữ',
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(),
-        home: const HomeScreen(),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, _) => MaterialApp(
+          title: 'Ôn tập trắc nghiệm song ngữ',
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(),
+          home: settings.isLoggedIn ? const HomeScreen() : const LoginScreen(),
+        ),
       ),
     );
   }

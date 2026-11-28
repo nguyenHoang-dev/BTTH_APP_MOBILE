@@ -173,6 +173,13 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.delete_outline_rounded),
             onPressed: canClear ? _confirmClearHistory : null,
           ),
+          if (settings.isLoggedIn)
+            IconButton(
+              key: const Key('logout_button'),
+              tooltip: 'Đăng xuất',
+              icon: const Icon(Icons.logout_rounded),
+              onPressed: settings.logout,
+            ),
           const SizedBox(width: 4),
         ],
       ),
@@ -312,6 +319,36 @@ class _HeroBanner extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+          if (settings.studentName.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.person_rounded, size: 15, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      settings.studentId.isNotEmpty
+                          ? 'Học viên: ${settings.studentName} (${settings.studentId})'
+                          : 'Học viên: ${settings.studentName}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Wrap(
             spacing: 8,
             runSpacing: 6,
