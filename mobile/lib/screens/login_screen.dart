@@ -34,6 +34,158 @@ class _LoginScreenState extends State<LoginScreen> {
         );
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final resetFormKey = GlobalKey<FormState>();
+    final resetIdCtrl = TextEditingController(text: _idController.text.trim());
+    final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
+    var obscureNew = true;
+    var obscureConfirm = true;
+
+    final updated = await showDialog<({String id, String password})>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          icon: Icon(
+            Icons.lock_reset_rounded,
+            size: 36,
+            color: Theme.of(ctx).colorScheme.primary,
+          ),
+          title: const Text('Quên mật khẩu'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: resetFormKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Nhập mã sinh viên/tài khoản để đặt lại mật khẩu mới.',
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    key: const Key('forgot_id_input'),
+                    controller: resetIdCtrl,
+                    textCapitalization: TextCapitalization.characters,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Mã sinh viên / Tài khoản',
+                      hintText: 'Nhập mã sinh viên hoặc tài khoản',
+                      prefixIcon: const Icon(Icons.badge_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Vui lòng nhập mã sinh viên hoặc tài khoản';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    key: const Key('forgot_new_password_input'),
+                    controller: newPassCtrl,
+                    obscureText: obscureNew,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Mật khẩu mới',
+                      hintText: 'Tối thiểu 4 ký tự',
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureNew
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setDialogState(() => obscureNew = !obscureNew);
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().length < 4) {
+                        return 'Mật khẩu mới cần ít nhất 4 ký tự';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    key: const Key('forgot_confirm_password_input'),
+                    controller: confirmPassCtrl,
+                    obscureText: obscureConfirm,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Xác nhận mật khẩu mới',
+                      hintText: 'Nhập lại mật khẩu mới',
+                      prefixIcon: const Icon(Icons.verified_user_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureConfirm
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setDialogState(() => obscureConfirm = !obscureConfirm);
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value != newPassCtrl.text) {
+                        return 'Mật khẩu xác nhận không khớp';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              key: const Key('forgot_submit_button'),
+              onPressed: () {
+                if (!(resetFormKey.currentState?.validate() ?? false)) return;
+                Navigator.pop(
+                  ctx,
+                  (
+                    id: resetIdCtrl.text.trim().toUpperCase(),
+                    password: newPassCtrl.text.trim(),
+                  ),
+                );
+              },
+              child: const Text('Đặt lại mật khẩu'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (updated == null || !mounted) return;
+    setState(() {
+      _idController.text = updated.id;
+      _passwordController.text = updated.password;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đã đặt lại mật khẩu mới cho tài khoản ${updated.id}.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -206,7 +358,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 20),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                key: const Key('forgot_password_button'),
+                                onPressed: _showForgotPasswordDialog,
+                                child: const Text('Quên mật khẩu?'),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
                             FilledButton.icon(
                               key: const Key('login_submit_button'),
                               onPressed: _submitLogin,
