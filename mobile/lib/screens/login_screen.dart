@@ -18,14 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  static const List<({String name, String id})> _teamMembers = [
-    (name: 'Hoàng Cao Nguyên', id: 'B24DCCC220'),
-    (name: 'Nguyễn Văn Khoát', id: 'B24DCCC166'),
-    (name: 'Đào Xuân Quân', id: 'B24DCCC232'),
-    (name: 'Huỳnh Đăng Tú', id: 'B24DCCC274'),
-    (name: 'Vũ Văn Tuấn', id: 'B24DCCC280'),
-  ];
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -34,28 +26,11 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _fillMember(({String name, String id}) member) {
-    setState(() {
-      _nameController.text = member.name;
-      _idController.text = member.id;
-      if (_passwordController.text.isEmpty) {
-        _passwordController.text = '123456';
-      }
-    });
-  }
-
   void _submitLogin() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<SettingsProvider>().login(
           name: _nameController.text,
           studentId: _idController.text,
-        );
-  }
-
-  void _loginAsGuest() {
-    context.read<SettingsProvider>().login(
-          name: 'Học viên Khách',
-          studentId: 'GUEST',
         );
   }
 
@@ -145,14 +120,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Đăng nhập Học viên',
+                              'Đăng nhập hệ thống',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Nhập thông tin sinh viên hoặc chọn tài khoản nhóm bên dưới',
+                              'Vui lòng nhập thông tin tài khoản để bắt đầu ôn tập',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
@@ -163,8 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _nameController,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
-                                labelText: 'Họ và tên sinh viên',
-                                hintText: 'Ví dụ: Hoàng Cao Nguyên',
+                                labelText: 'Họ và tên',
+                                hintText: 'Nhập họ và tên của bạn',
                                 prefixIcon: const Icon(Icons.person_outline_rounded),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -185,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 labelText: 'Mã sinh viên / Tài khoản',
-                                hintText: 'Ví dụ: B24DCCC220',
+                                hintText: 'Nhập mã sinh viên hoặc tài khoản',
                                 prefixIcon: const Icon(Icons.badge_outlined),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -193,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'Vui lòng nhập mã sinh viên';
+                                  return 'Vui lòng nhập mã sinh viên hoặc tài khoản';
                                 }
                                 return null;
                               },
@@ -207,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               onFieldSubmitted: (_) => _submitLogin(),
                               decoration: InputDecoration(
                                 labelText: 'Mật khẩu',
-                                hintText: 'Nhập mật khẩu (tối thiểu 4 ký tự)',
+                                hintText: 'Nhập mật khẩu',
                                 prefixIcon: const Icon(Icons.lock_outline_rounded),
                                 suffixIcon: IconButton(
                                   tooltip: _obscurePassword ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
@@ -231,43 +206,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Chọn nhanh thành viên nhóm:',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                for (final member in _teamMembers)
-                                  ActionChip(
-                                    avatar: const Icon(Icons.account_circle_outlined, size: 16),
-                                    label: Text(
-                                      '${member.name} (${member.id})',
-                                      style: const TextStyle(fontSize: 11.5),
-                                    ),
-                                    onPressed: () => _fillMember(member),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 20),
                             FilledButton.icon(
                               key: const Key('login_submit_button'),
                               onPressed: _submitLogin,
                               icon: const Icon(Icons.login_rounded),
                               label: const Text('Đăng nhập'),
-                            ),
-                            const SizedBox(height: 8),
-                            TextButton.icon(
-                              key: const Key('login_guest_button'),
-                              onPressed: _loginAsGuest,
-                              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                              label: const Text('Vào nhanh với tư cách Khách (Guest)'),
                             ),
                           ],
                         ),
