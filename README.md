@@ -251,3 +251,86 @@ flutter test
 - **Công cụ AI đã sử dụng trong quá trình phát triển**: Antigravity (hỗ trợ khởi tạo khung kiến trúc Clean Architecture + Provider, cấu hình Gradle và viết tài liệu luồng dữ liệu).
 - **Lịch sử các đoạn hội thoại & prompt quan trọng**: Lưu trữ đầy đủ tại thư mục [docs/ai/](docs/ai/README.md).
 - **Cam kết của nhóm**: Toàn bộ thành viên đã tự chạy thử, kiểm chứng bằng `flutter analyze` & `flutter test`, và nắm vững từng dòng mã trong phần việc được phân công tại [docs/task_assignment.md](docs/task_assignment.md).
+
+---
+
+## 8. Hướng dẫn Build APK & Kết nối chạy trên Điện thoại Android thật
+
+### Phân tích & Hướng kết nối hiệu quả nhất trên điện thoại thật
+App có 2 phần chức năng:
+- **Làm bài 300 câu hỏi, chấm điểm, lưu lịch sử SQLite, ôn câu sai**: chạy **100% Offline** ngay trong APK, không cần server.
+- **Tính năng "Hỏi AI tại sao sai"**: gọi `POST {baseUrl}/api/explain` tới server Node.js (hoặc tự fallback về Demo nếu bật **Chế độ Demo AI** / mất kết nối).
+
+#### Phương án A: Cắm cáp USB + `adb reverse` (Hiệu quả & ổn định nhất khi demo/test)
+- **Cách hoạt động**: Dùng `app-release.apk` mặc định (trỏ về `http://localhost:3000` trên điện thoại), rồi dùng lệnh `adb reverse tcp:3000 tcp:3000` để chuyển tiếp cổng `3000` từ điện thoại thẳng về cổng `3000` của PC qua cáp USB.
+- **Ưu điểm**:
+  - Không phụ thuộc IP Wi-Fi (ra quán cafe hay lên phòng bảo vệ đồ án đổi mạng vẫn chạy ngay).
+  - Không bị tường lửa Windows Firewall hoặc tính năng *AP/Client Isolation* của Wi-Fi công cộng/trường học chặn.
+
+#### Phương án B: Chạy độc lập 100% Offline (Demo Mode)
+- Cài `app-release.apk` lên điện thoại (gửi qua Zalo/Drive/USB đều được), bật công tắc **"Chế độ Demo AI"** ngay trên màn hình chính. Phù hợp khi không bật laptop/server.
+- Lấy file `mobile/build/app/outputs/flutter-apk/app-release.apk`:
+  - **Cách 1 (Không cần cáp/ADB)**: Gửi file `app-release.apk` sang điện thoại (qua Zalo Cloud của tôi, Google Drive, Telegram, hoặc copy vào bộ nhớ máy) -> mở file trên điện thoại -> cho phép *"Cài đặt ứng dụng từ nguồn không xác định"* -> bấm **Cài đặt**.
+  - **Cách 2 (Dùng cáp USB)**: Cắm điện thoại bật USB Debugging rồi chạy:
+    ```powershell
+    adb install -r "mobile/build/app/outputs/flutter-apk/app-release.apk"
+    ```
+
+---
+
+### Hướng dẫn Build APK & Kết nối (từng bước)
+
+#### Bước 1: Bật Gỡ lỗi USB (USB Debugging) trên điện thoại Android
+1. Vào *Cài đặt (Settings)* -> *Giới thiệu điện thoại*.
+2. Nhấn *7 lần* liên tiếp vào *Số bản dựng* để mở *Tùy chọn nhà phát triển (Developer options)*.
+3. Vào **Cài đặt** -> **Hệ thống / Cài đặt bổ sung** -> **Tùy chọn nhà phát triển** -> Bật **Gỡ lỗi USB (USB Debugging)**.
+
+#### Bước 2: Cắm cáp USB vào máy tính & Kiểm tra kết nối ADB
+1. Cắm cáp USB truyền dữ liệu, trên điện thoại chọn **Cho phép gỡ lỗi USB (Allow USB debugging)**.
+2. Chạy lệnh kiểm tra thiết bị trong PowerShell:
+   ```powershell
+   adb devices -l
+   ```
+   Thấy dòng có chữ `device` (không phải `unauthorized`) là kết nối thành công.
+
+#### Bước 3: Cài APK lên điện thoại thật
+- **Nếu dùng Phương án A (USB + `adb reverse` - Khuyên dùng):**
+  ```powershell
+  adb install -r "mobile/build/app/outputs/flutter-apk/app-release.apk"
+  ```
+- **Nếu dùng Phương án B (Wi-Fi LAN không dây, ví dụ `192.168.1.4`):**
+  ```powershell
+  cd mobile
+  flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.4:3000
+  adb install -r "build/app/outputs/flutter-apk/app-release.apk"
+  ```
+  *(Hoặc copy file `.apk` vào điện thoại bằng cáp/Google Drive rồi mở trực tiếp trên điện thoại để cài đặt).*
+
+#### Bước 4: Khởi động Backend Server trên máy tính
+Mở PowerShell tại thư mục `server/`:
+```powershell
+cd server
+npm start
+```
+- Nếu muốn dùng **Gemini AI thật** (thay vì Demo Mode): mở file `server/.env` và điền key của bạn vào `GEMINI_API_KEY=...`, sau đó chạy lại `npm start`.
+
+#### Bước 5: Mở đường kết nối từ điện thoại về Server
+- **Theo Phương án A (cắm cáp USB)**: Mở một cửa sổ PowerShell khác và chạy:
+  ```powershell
+  adb reverse tcp:3000 tcp:3000
+  ```
+  *(Mỗi lần rút cáp cắm lại chỉ cần chạy lại dòng lệnh này).*
+
+- **Theo Phương án B (Wi-Fi LAN, ví dụ `192.168.1.4`)**:
+  1. Mở cổng `3000` trên Windows Firewall (chạy PowerShell với quyền **Run as Administrator** 1 lần duy nhất):
+     ```powershell
+     New-NetFirewallRule -DisplayName "BTL Node Server 3000" -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow
+     ```
+  2. Test từ trình duyệt trên điện thoại: mở `http://192.168.1.4:3000/api/health` — nếu hiện `{"status":"ok",...}` là thông mạng hoàn toàn!
+
+#### Bước 6: Kiểm tra trên App
+1. Mở app **"Ôn tập song ngữ"** trên điện thoại.
+2. Làm thử bài trắc nghiệm -> kiểm tra lưu lịch sử sau khi thoát mở lại app (SQLite).
+3. Vào màn hình kết quả -> bấm **"Hỏi AI tại sao sai"** (tắt công tắc *Chế độ Demo AI* ở màn hình chính nếu muốn test gọi trực tiếp sang server Node.js trên máy tính).
+4. *(Tùy chọn cho bản nộp Google Play sau này)*: Nếu chưa cấu hình `key.properties`, bản `release` sẽ tự dùng `debug.keystore` để cài test trực tiếp; nếu xuất bản lên Play Store thì tạo keystore riêng (`keytool`) và cấu hình `mobile/android/key.properties` theo hướng dẫn ở Mục 4.
+
