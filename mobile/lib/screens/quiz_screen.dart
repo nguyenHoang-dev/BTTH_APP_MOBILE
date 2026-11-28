@@ -231,121 +231,134 @@ class _QuizBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-              ),
-            ),
-            child: Text(
-              q.content.resolve(lang),
-              key: const Key('question_text'),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           Expanded(
-            child: ListView.separated(
-              itemCount: q.options.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final selected = quiz.selectedIndexForCurrent == i;
-                return Card(
-                  color: selected
-                      ? colorScheme.primaryContainer
-                      : Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(
-                      color: selected
-                          ? colorScheme.primary
-                          : colorScheme.outlineVariant.withValues(alpha: 0.6),
-                      width: selected ? 1.8 : 1,
+            child: ListView(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.6),
                     ),
                   ),
-                  child: ListTile(
-                    key: Key('option_$i'),
-                    leading: CircleAvatar(
-                      backgroundColor: selected
-                          ? colorScheme.primary
-                          : colorScheme.surfaceContainerHighest,
-                      foregroundColor: selected
-                          ? colorScheme.onPrimary
-                          : colorScheme.onSurfaceVariant,
-                      child: Text(
-                        String.fromCharCode(65 + i),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
+                  child: Text(
+                    q.content.resolve(lang),
+                    key: const Key('question_text'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
                     ),
-                    title: Text(
-                      q.options[i].resolve(lang),
-                      style: TextStyle(
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
-                    trailing: selected
-                        ? Icon(
-                            Icons.check_circle_rounded,
-                            color: colorScheme.primary,
-                          )
-                        : null,
-                    onTap: () => quiz.selectAnswer(i),
                   ),
-                );
-              },
+                ),
+                const SizedBox(height: 12),
+                for (var i = 0; i < q.options.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  Builder(
+                    builder: (_) {
+                      final selected = quiz.selectedIndexForCurrent == i;
+                      return Card(
+                        color: selected
+                            ? colorScheme.primaryContainer
+                            : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: selected
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant.withValues(
+                                    alpha: 0.6,
+                                  ),
+                            width: selected ? 1.8 : 1,
+                          ),
+                        ),
+                        child: ListTile(
+                          key: Key('option_$i'),
+                          leading: CircleAvatar(
+                            backgroundColor: selected
+                                ? colorScheme.primary
+                                : colorScheme.surfaceContainerHighest,
+                            foregroundColor: selected
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurfaceVariant,
+                            child: Text(
+                              String.fromCharCode(65 + i),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            q.options[i].resolve(lang),
+                            style: TextStyle(
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                          trailing: selected
+                              ? Icon(
+                                  Icons.check_circle_rounded,
+                                  color: colorScheme.primary,
+                                )
+                              : null,
+                          onTap: () => quiz.selectAnswer(i),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                const SizedBox(height: 8),
+              ],
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: quiz.isFirst ? null : quiz.previous,
-                  child: const Text(
-                    'Câu trước',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: quiz.isFirst ? null : quiz.previous,
+                    child: const Text(
+                      'Câu trước',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: quiz.isLast
-                    ? FilledButton(
-                        key: const Key('submit_button'),
-                        onPressed: quiz.isSubmitting ? null : onSubmit,
-                        child: quiz.isSubmitting
-                            ? const SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: quiz.isLast
+                      ? FilledButton(
+                          key: const Key('submit_button'),
+                          onPressed: quiz.isSubmitting ? null : onSubmit,
+                          child: quiz.isSubmitting
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Nộp bài',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              )
-                            : const Text(
-                                'Nộp bài',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                      )
-                    : FilledButton(
-                        key: const Key('next_button'),
-                        onPressed: quiz.next,
-                        child: const Text(
-                          'Câu tiếp',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        )
+                      : FilledButton(
+                          key: const Key('next_button'),
+                          onPressed: quiz.next,
+                          child: const Text(
+                            'Câu tiếp',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
