@@ -343,22 +343,29 @@ class _PracticeBody extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _getCategoryLabel(q.category),
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onPrimaryContainer,
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _getCategoryLabel(q.category),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           Text(
                             '#${q.id}',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -641,7 +648,7 @@ class _PracticeBody extends StatelessWidget {
     final answered = practice.answeredCount;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -652,56 +659,76 @@ class _PracticeBody extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          OutlinedButton.icon(
-            key: const Key('practice_prev_button'),
-            onPressed: practice.isFirst ? null : practice.previousQuestion,
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Câu trước'),
-          ),
-          const Spacer(),
-          if (answered > 0 && !isLast)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: TextButton.icon(
-                key: const Key('practice_summary_bottom_button'),
-                onPressed: () => showSummaryDialog(context, practice: practice, lang: lang),
-                icon: const Icon(Icons.flag_outlined, size: 18),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                key: const Key('practice_prev_button'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                ),
+                onPressed: practice.isFirst ? null : practice.previousQuestion,
+                icon: const Icon(Icons.arrow_back, size: 18),
                 label: Text(
-                  switch (lang) {
-                    AppLanguage.vi => 'Tổng kết',
-                    AppLanguage.en => 'Summary',
-                    AppLanguage.both => 'Tổng kết • Summary',
-                  },
+                  lang == AppLanguage.en ? 'Prev' : 'Câu trước',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
-          if (isLast)
-            FilledButton.icon(
-              key: const Key('practice_finish_bottom_button'),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                foregroundColor: Colors.white,
+            const SizedBox(width: 8),
+            if (answered > 0 && !isLast) ...[
+              TextButton.icon(
+                key: const Key('practice_summary_bottom_button'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () => showSummaryDialog(context, practice: practice, lang: lang),
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                label: Text(
+                  lang == AppLanguage.en ? 'Summary' : 'Tổng kết',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              onPressed: () => showSummaryDialog(context, practice: practice, lang: lang),
-              icon: const Icon(Icons.check_circle_outline),
-              label: Text(
-                switch (lang) {
-                  AppLanguage.vi => 'Hoàn thành',
-                  AppLanguage.en => 'Complete',
-                  AppLanguage.both => 'Hoàn thành • Complete',
-                },
-              ),
-            )
-          else
-            FilledButton.icon(
-              key: const Key('practice_next_button'),
-              onPressed: practice.nextQuestion,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('Câu tiếp'),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: isLast
+                  ? FilledButton.icon(
+                      key: const Key('practice_finish_bottom_button'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      ),
+                      onPressed: () => showSummaryDialog(context, practice: practice, lang: lang),
+                      icon: const Icon(Icons.check_circle_outline, size: 18),
+                      label: Text(
+                        lang == AppLanguage.en ? 'Complete' : 'Hoàn thành',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  : FilledButton.icon(
+                      key: const Key('practice_next_button'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      ),
+                      onPressed: practice.nextQuestion,
+                      icon: const Icon(Icons.arrow_forward, size: 18),
+                      label: Text(
+                        lang == AppLanguage.en ? 'Next' : 'Câu tiếp',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
