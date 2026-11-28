@@ -57,7 +57,11 @@ android {
             }
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseKeyPropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             ndk {
                 abiFilters += listOf("arm64-v8a", "x86_64")
             }
@@ -84,20 +88,25 @@ flutter {
 // Không dùng C++ / FFI trong dự án -> tắt các task CMake/NDK do Flutter 3.47 tự thêm
 // và cắt bỏ debug symbols trực tiếp để giảm APK từ 1.3GB xuống ~40MB mà không cần tải NDK.
 fun stripElf64(file: File) {
-    RandomAccessFile(file, "rw").use { raf ->
-        if (raf.length() < 64L) return
-        val hdr = ByteArray(64)
-        raf.readFully(hdr)
-        val bb = ByteBuffer.wrap(hdr).order(ByteOrder.LITTLE_ENDIAN)
-        if (bb.getInt(0) != 0x464c457f) return
-        val phoff = bb.getLong(32)
-        val shoff = bb.getLong(40)
-        val phentsize = bb.getShort(54).toInt() and 0xFFFF
-        val phnum = bb.getShort(56).toInt() and 0xFFFF
-        val shentsize = bb.getShort(58).toInt() and 0xFFFF
-        val shnum = bb.getShort(60).toInt() and 0xFFFF
-        val shstrndx = bb.getShort(62).toInt() and 0xFFFF
-        if (shoff <= 0L || shnum <= 0 || shstrndx >= shnum) return
+    try {
+        RandomAccessFile(file, "rw").use { raf ->
+            if (raf.length() < 64L) return
+            val hdr = ByteArray(64)
+            raf.readFully(hdr)
+            val bb = ByteBuffer.wrap(hdr).order(ByteOrder.LITTLE_ENDIAN)
+            if (bb.getInt(0) != 0x464c457f) return
+            // Chỉ xử lý ELF 64-bit (EI_CLASS == 2)
+            if (hdr[4].toInt() != 2) return
+            val phoff = bb.getLong(32)
+            val shoff = bb.getLong(40)
+            val phentsize = bb.getShort(54).toInt() and 0xFFFF
+            val phnum = bb.getShort(56).toInt() and 0xFFFF
+            val shentsize = bb.getShort(58).toInt() and 0xFFFF
+            val shnum = bb.getShort(60).toInt() and 0xFFFF
+            val shstrndx = bb.getShort(62).toInt() and 0xFFFF
+            if (phentsize < 56 || shentsize < 64) return
+            if (shoff <= 0L || shnum <= 0 || shstrndx >= shnum) return
+            if (shoff + shnum.toLong() * shentsize > raf.length()) return
 
         var maxEnd = 0L
         val pbuf = ByteArray(phentsize)
@@ -155,6 +164,9 @@ fun stripElf64(file: File) {
         raf.seek(newShOff)
         raf.write(shTableBytes)
         raf.setLength(newShOff + shTableBytes.size.toLong())
+        }
+    } catch (_: Throwable) {
+        // Nếu thư viện .so của bên thứ 3 đã strip sẵn hoặc cấu trúc đặc biệt thì giữ nguyên.
     }
 }
 
